@@ -2,6 +2,8 @@
 
 #include "gems.h"
 
+#include <exception>
+
 #include "gmml/gmml.h"
 
 #include "structure.h"
@@ -30,8 +32,14 @@ void Gems::Init(v8::Handle<v8::ObjectTemplate> global) {
 v8::Handle<v8::Value> Gems::BuildGlycam(const v8::Arguments& args) {
     v8::HandleScope scope;
 
+    Structure *structure = NULL;
+
     v8::String::Utf8Value glycam_string(args[0]);
-    Structure *structure = gmml::glycam_build(*glycam_string);
+    try {
+        structure = gmml::glycam_build(*glycam_string);
+    } catch(const std::exception& e) {
+        return v8::ThrowException(v8::String::New(e.what()));
+    }
 
     return scope.Close(StructureWrapper::wrap(structure));
 }

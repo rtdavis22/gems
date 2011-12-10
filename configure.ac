@@ -27,4 +27,6 @@ AC_CONFIG_FILES([Makefile])
 
 AC_CONFIG_SUBDIRS([deps/gmml])
 
+./gyp_configure
+
 AC_OUTPUT

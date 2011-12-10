@@ -1,4 +1,4 @@
-# This was pulled from node. It needs trimming.
+# Copied from node and modified.
 {
   'variables': {
     'visibility%': 'hidden',         # V8's visibility setting
@@ -6,7 +6,6 @@
     'host_arch%': 'ia32',            # set v8's host architecture
     'library%': 'static_library',    # allow override to 'shared_library' for DLL/.so builds
     'component%': 'static_library',  # NB. these names match with what V8 expects
-    'msvs_multi_core_compile': '0',  # we do enable multicore compiles, but not using the V8 way
   },
 
   'target_defaults': {
@@ -15,86 +14,11 @@
       'Debug': {
         'defines': [ 'DEBUG', '_DEBUG' ],
         'cflags': [ '-g', '-O0' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
-            'target_conditions': [
-              ['library=="static_library"', {
-                'RuntimeLibrary': 1, # static debug
-              }, {
-                'RuntimeLibrary': 3, # DLL debug
-              }],
-            ],
-            'Optimization': 0, # /Od, no optimization
-            'MinimalRebuild': 'true',
-            'OmitFramePointers': 'false',
-            'BasicRuntimeChecks': 3, # /RTC1
-          },
-          'VCLinkerTool': {
-            'LinkIncremental': 2, # enable incremental linking
-          },
-        },
       },
       'Release': {
         'defines': [ 'NDEBUG' ],
         'cflags': [ '-O3', '-fomit-frame-pointer', '-fdata-sections', '-ffunction-sections' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
-            'target_conditions': [
-              ['library=="static_library"', {
-                'RuntimeLibrary': 0, # static release
-              }, {
-                'RuntimeLibrary': 2, # debug release
-              }],
-            ],
-            'Optimization': 3, # /Ox, full optimization
-            'FavorSizeOrSpeed': 1, # /Ot, favour speed over size
-            'InlineFunctionExpansion': 2, # /Ob2, inline anything eligible
-            'WholeProgramOptimization': 'true', # /GL, whole program optimization, needed for LTCG
-            'OmitFramePointers': 'true',
-            'EnableFunctionLevelLinking': 'true',
-            'EnableIntrinsicFunctions': 'true',
-            'AdditionalOptions': [
-              '/MP', # compile across multiple CPUs
-            ],
-          },
-          'VCLibrarianTool': {
-            'AdditionalOptions': [
-              '/LTCG', # link time code generation
-            ],
-          },
-          'VCLinkerTool': {
-            'LinkTimeCodeGeneration': 1, # link-time code generation
-            'OptimizeReferences': 2, # /OPT:REF
-            'EnableCOMDATFolding': 2, # /OPT:ICF
-            'LinkIncremental': 1, # disable incremental linking
-          },
-        },
       }
-    },
-    'msvs_settings': {
-      'VCCLCompilerTool': {
-        'StringPooling': 'true', # pool string literals
-        'DebugInformationFormat': 3, # Generate a PDB
-        'WarningLevel': 3,
-        'BufferSecurityCheck': 'true',
-        'ExceptionHandling': 1, # /EHsc
-        'SuppressStartupBanner': 'true',
-        'WarnAsError': 'false',
-      },
-      'VCLibrarianTool': {
-      },
-      'VCLinkerTool': {
-        'GenerateDebugInformation': 'true',
-        'RandomizedBaseAddress': 2, # enable ASLR
-        'DataExecutionPrevention': 2, # enable DEP
-        'AllowIsolation': 'true',
-        'SuppressStartupBanner': 'true',
-        'target_conditions': [
-          ['_type=="executable"', {
-            'SubSystem': 1, # console executable
-          }],
-        ],
-      },
     },
     'conditions': [
       ['OS == "win"', {

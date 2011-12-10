@@ -6,6 +6,9 @@ all-local: out/Makefile
 	$(MAKE) -C out BUILDTYPE=$(BUILDTYPE)
 	-ln -fs out/$(BUILDTYPE)/gems gems
 
+build/options.gypi:
+	gyp_configure
+
 out/Makefile: build/gems.gyp build/common.gypi build/options.gypi
 	build/run_gyp
 
