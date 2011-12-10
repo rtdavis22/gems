@@ -1,0 +1,22 @@
+// Author: Robert Davis
+
+#ifndef GEMS_GEMS_H_
+#define GEMS_GEMS_H_
+
+#include "v8.h"
+
+namespace gems {
+
+class Gems {
+  public:
+    static void Init(v8::Handle<v8::ObjectTemplate> object_template);
+
+    static v8::Handle<v8::Value> BuildGlycam(const v8::Arguments& args);
+    static v8::Handle<v8::Value> LoadParameterFile(const v8::Arguments& args);
+    static v8::Handle<v8::Value> LoadPrepFile(const v8::Arguments& args);
+    static v8::Handle<v8::Value> AddPath(const v8::Arguments& args);
+};
+
+}  // namespace gems
+
+#endif  // GEMS_GEMS_H_

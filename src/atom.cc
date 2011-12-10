@@ -1,0 +1,169 @@
+// Author: Robert Davis
+
+#include "atom.h"
+
+#include <iostream>
+
+#include "gmml/gmml.h"
+
+using gmml::Structure;
+
+using v8::AccessorInfo;
+using v8::Arguments;
+using v8::Array;
+using v8::External;
+using v8::FunctionTemplate;
+using v8::Handle;
+using v8::HandleScope;
+using v8::Local;
+using v8::Number;
+using v8::Object;
+using v8::ObjectTemplate;
+using v8::Persistent;
+using v8::String;
+using v8::ThrowException;
+using v8::Undefined;
+using v8::Value;
+
+namespace gems {
+namespace {
+
+// This class builds the function template.
+class AtomTemplate {
+  public:
+    AtomTemplate() { Init(); }
+
+    v8::Persistent<v8::FunctionTemplate> get_template() const {
+        return template_;
+    }
+
+    ~AtomTemplate() {
+        template_.Dispose();
+        template_.Clear();
+    }
+
+    static Handle<Value> GetName(Local<String> property,
+                                 const AccessorInfo& info);
+    static void SetName(Local<String> property, Local<Value> value,
+                        const AccessorInfo& info);
+
+    static Handle<Value> GetCoordinate(Local<String> property,
+                                       const AccessorInfo& info);
+    static void SetCoordinate(Local<String> property, Local<Value> value,
+                              const AccessorInfo& info);
+
+  private:
+    void Init();
+
+    v8::Persistent<v8::FunctionTemplate> template_;
+};
+
+}  // namespace
+
+Handle<Object> AtomWrapper::wrap(Structure::AtomPtr atom) {
+    HandleScope handle_scope;
+
+    static AtomTemplate atom_template;
+    Persistent<FunctionTemplate> template_ = atom_template.get_template();
+
+    Persistent<Object> instance = Persistent<Object>::New(
+        template_->InstanceTemplate()->NewInstance());
+
+    Structure::AtomPtr *wrappable_atom = new Structure::AtomPtr(atom);
+
+    instance.MakeWeak(wrappable_atom, callback);
+
+    instance->SetInternalField(0, External::New(wrappable_atom));
+
+    return handle_scope.Close(instance);
+}
+
+void AtomWrapper::callback(Persistent<Value> object, void *data) {
+    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(data);
+    delete atom;
+    object.Dispose();
+    object.Clear();
+}
+
+Handle<Value> AtomTemplate::GetName(Local<String> property,
+                                    const AccessorInfo& info) {
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
+    return String::New((*atom)->name().c_str());
+}
+
+void AtomTemplate::SetName(Local<String> property, Local<Value> value,
+                           const AccessorInfo& info) {
+    if (!value->IsString()) {
+        ThrowException(String::New("Value is not a string"));
+        return;
+    }
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
+    (*atom)->set_name(*String::Utf8Value(value));
+}
+
+Handle<Value> AtomTemplate::GetCoordinate(Local<String> property,
+                                          const AccessorInfo& info) {
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
+    Local<Array> array = Array::New(3);
+    array->Set(0, Number::New((*atom)->coordinate().x));
+    array->Set(1, Number::New((*atom)->coordinate().y));
+    array->Set(2, Number::New((*atom)->coordinate().z));
+    return array;
+}
+
+void AtomTemplate::SetCoordinate(Local<String> property, Local<Value> value,
+                                 const AccessorInfo& info) {
+    if (!value->IsArray()) {
+        ThrowException(String::New("Parameter is not an array"));
+        return;
+    }
+
+    Local<Array> array = Array::Cast(*value);
+
+    if (array->Length() != 3) {
+        ThrowException(String::New("Array must have size 3"));
+        return;
+    }
+
+    if (!array->Get(0)->IsNumber() || !array->Get(1)->IsNumber() ||
+            !array->Get(2)->IsNumber()) {
+        ThrowException(String::New("Coordinate values must be numeric."));
+        return;
+    }
+
+    double x = array->Get(0)->ToNumber()->Value();
+    double y = array->Get(1)->ToNumber()->Value();
+    double z = array->Get(2)->ToNumber()->Value();
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
+
+    (*atom)->set_coordinate(x, y, z);
+}
+
+void AtomTemplate::Init() {
+    HandleScope handle_scope;
+
+    Handle<FunctionTemplate> local_template = FunctionTemplate::New();
+    Handle<ObjectTemplate> instance_template =
+        local_template->InstanceTemplate();
+    instance_template->SetInternalFieldCount(1);
+
+    instance_template->SetAccessor(String::New("name"),
+                                   GetName, SetName);
+
+    instance_template->SetAccessor(String::New("coordinate"),
+                                   GetCoordinate, SetCoordinate);
+
+    template_ = Persistent<FunctionTemplate>::New(local_template);
+}
+
+}  // namespace gems
