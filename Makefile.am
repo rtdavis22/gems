@@ -24,8 +24,8 @@ EXTRA_DIST = \
   autogen.sh \
   build/common.gypi \
   build/gems.gyp \
-  build/options.gypi \
   build/run_gyp \
+  gyp_configure \
   src/atom.cc \
   src/atom.h \
   src/gems.cc \
