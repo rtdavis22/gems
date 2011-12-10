@@ -8,12 +8,12 @@ set -e
 
 if test ! -e deps/v8; then
   echo "Fetching v8 from the web..."
-  svn export http://v8.googlecode.com/svn/trunk/ deps/v8
+  svn export http://v8.googlecode.com/svn/trunk/ deps/v8 > /dev/null
 fi
 
 if test ! -e build/gyp; then
   echo "Fetching gyp from the web..."
-  svn export http://gyp.googlecode.com/svn/trunk/ build/gyp
+  svn export http://gyp.googlecode.com/svn/trunk/ build/gyp > /dev/null
 fi
 
 set -ex
