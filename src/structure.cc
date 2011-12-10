@@ -9,8 +9,6 @@
 
 #include "atom.h"
 
-using std::cout;
-using std::endl;
 using std::map;
 
 using gmml::Structure;

@@ -6,7 +6,7 @@ import sys
 script_dir = os.path.dirname(__file__)
 gems_root  = os.path.normpath(os.path.join(script_dir, os.pardir))
 
-sys.path.insert(0, os.path.join(gems_root, 'tools', 'gyp', 'pylib'))
+sys.path.insert(0, os.path.join(gems_root, 'build', 'gyp', 'pylib'))
 import gyp
 
 # Directory within which we want all generated files (including Makefiles)
@@ -22,9 +22,9 @@ def run_gyp(args):
 if __name__ == '__main__':
   args = sys.argv[1:]
 
-  args.append(os.path.join(os.path.abspath(gems_root), 'gems.gyp'))
-  common_fn  = os.path.join(os.path.abspath(gems_root), 'common.gypi')
-  options_fn = os.path.join(os.path.abspath(gems_root), 'options.gypi')
+  args.append(os.path.join(os.path.abspath(gems_root), 'build', 'gems.gyp'))
+  common_fn  = os.path.join(os.path.abspath(gems_root), 'build', 'common.gypi')
+  options_fn = os.path.join(os.path.abspath(gems_root), 'build', 'options.gypi')
 
   if os.path.exists(common_fn):
     args.extend(['-I', common_fn])
