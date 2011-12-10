@@ -1,32 +1,11 @@
-SUBDIRS = deps/gmml #.
-
-#bin_PROGRAMS = gems
-
-#gems_SOURCES = \
-#  src/atom.cc \
-#  src/atom.h \
-#  src/gems.cc \
-#  src/gems.h \
-#  src/shell.cc \
-#  src/structure.cc \
-#  src/structure.h
-
-#gems_CPPFLAGS = \
-#  -I$(top_srcdir)/v8/include \
-#  -I$(top_srcdir)/gmml/include
-
-#gems_LDFLAGS = -lpthread
-
-#gems_LDADD = \
-#  $(top_srcdir)/v8/libv8.a \
-#  $(top_srcdir)/gmml/libgmml.a
+SUBDIRS = deps/gmml
 
 all-local: out/Makefile
 	$(MAKE) -C out
 	-ln -fs out/Debug/gems gems
 
-out/Makefile: gems.gyp common.gypi options.gypi
-	tools/run_gyp
+out/Makefile: build/gems.gyp build/common.gypi build/options.gypi
+	build/run_gyp
 
 clean-local:
 	rm -f gems
@@ -54,3 +33,7 @@ MAINTAINERCLEANFILES = \
   m4/ltversion.m4 \
   m4/lt~obsolete.m4 \
   m4/ltoptions.m4
+
+maintainer-clean-local:
+	rm -f $(MAINTAINERCLEANFILES)
+	rm -rf autom4te.cache
