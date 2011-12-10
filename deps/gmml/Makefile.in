@@ -394,6 +394,7 @@ libgmml_a_SOURCES = \
   src/utilities.h
 
 libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
+EXTRA_DIST = autogen.sh
 MAINTAINERCLEANFILES = \
   aclocal.m4 \
   config.h \

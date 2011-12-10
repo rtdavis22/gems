@@ -11,6 +11,24 @@ clean-local:
 	rm -f gems
 	rm -rf out
 
+dist-hook:
+	svn export http://v8.googlecode.com/svn/trunk/ $(distdir)/deps/v8
+	svn export http://gyp.googlecode.com/svn/trunk/ $(distdir)/build/gyp
+
+EXTRA_DIST = \
+  autogen.sh \
+  build/common.gypi \
+  build/gems.gyp \
+  build/options.gypi \
+  build/run_gyp \
+  src/atom.cc \
+  src/atom.h \
+  src/gems.cc \
+  src/gems.h \
+  src/shell.cc \
+  src/structure.cc \
+  src/structure.h
+
 MAINTAINERCLEANFILES = \
   aclocal.m4 \
   config.h \

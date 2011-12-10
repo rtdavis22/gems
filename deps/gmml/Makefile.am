@@ -96,6 +96,8 @@ libgmml_a_CPPFLAGS = -I$(top_srcdir)/include
 uninstall-hook:
 	rm -rf $(includedir)/gmml
 
+EXTRA_DIST = autogen.sh
+
 MAINTAINERCLEANFILES = \
   aclocal.m4 \
   config.h \
