@@ -1,8 +1,10 @@
+BUILDTYPE ?= Release
+
 SUBDIRS = deps/gmml
 
 all-local: out/Makefile
-	$(MAKE) -C out
-	-ln -fs out/Debug/gems gems
+	$(MAKE) -C out BUILDTYPE=$(BUILDTYPE)
+	-ln -fs out/$(BUILDTYPE)/gems gems
 
 out/Makefile: build/gems.gyp build/common.gypi build/options.gypi
 	build/run_gyp
@@ -52,6 +54,7 @@ MAINTAINERCLEANFILES = \
   m4/lt~obsolete.m4 \
   m4/ltoptions.m4
 
-maintainer-clean-local:
+maintainer-clean-local: clean-local
 	rm -f $(MAINTAINERCLEANFILES)
 	rm -rf autom4te.cache
+        
