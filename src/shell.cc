@@ -63,6 +63,16 @@ v8::Handle<v8::String> ReadFile(const char* name);
 void ReportException(v8::TryCatch* handler);
 
 
+void load_file(const char *file) {
+    v8::HandleScope handle_scope;
+    v8::Handle<v8::String> source = ReadFile(file);
+    if (source.IsEmpty()) return;
+    if (!ExecuteString(source, v8::String::New(file), false, false)) {
+
+    }
+}
+
+
 static bool run_shell;
 
 
@@ -71,16 +81,25 @@ int main(int argc, char* argv[]) {
   run_shell = (argc == 1);
   v8::HandleScope handle_scope;
   v8::Persistent<v8::Context> context = CreateShellContext();
+  
+
+
   if (context.IsEmpty()) {
     printf("Error creating context\n");
     return 1;
   }
   context->Enter();
+
+  //load_file(root + "src/element.js");
+
   int result = RunMain(argc, argv);
+
+
   if (run_shell) RunShell(context);
   context->Exit();
   context.Dispose();
   v8::V8::Dispose();
+
   return result;
 }
 
@@ -108,6 +127,8 @@ v8::Persistent<v8::Context> CreateShellContext() {
   global->Set(v8::String::New("version"), v8::FunctionTemplate::New(Version));
 
   gems::Gems::Init(global);
+
+  //load_file("/home/robert/Documents/gems/src/element.js");
 
   return v8::Context::New(NULL, global);
 }

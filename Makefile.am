@@ -28,6 +28,8 @@ EXTRA_DIST = \
   gyp_configure \
   src/atom.cc \
   src/atom.h \
+  src/element.cc \
+  src/element.h \
   src/gems.cc \
   src/gems.h \
   src/shell.cc \

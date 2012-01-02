@@ -21,7 +21,7 @@ class AtomWrapper {
   public:
     // The parameter should have type Structure::AtomPtr, but unfortunately
     // you can't forward declare a typedef within a class.
-    static v8::Handle<v8::Object> wrap(boost::shared_ptr<gmml::Atom> atom);
+    static v8::Handle<v8::Object> wrap(gmml::Atom *atom);
 
   private:
     static void callback(v8::Persistent<v8::Value> object, void *data);

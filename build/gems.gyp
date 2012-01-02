@@ -41,7 +41,9 @@
 
       'sources': [
         '../src/atom.cc',
+        '../src/element.cc',
         '../src/gems.cc',
+        '../src/pdb_structure.cc',
         '../src/shell.cc',
         '../src/structure.cc',
       ],

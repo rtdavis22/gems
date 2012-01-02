@@ -11,8 +11,10 @@
 
 using std::map;
 
+using gmml::Atom;
 using gmml::Structure;
 
+using v8::AccessorInfo;
 using v8::Arguments;
 using v8::Array;
 using v8::External;
@@ -29,32 +31,17 @@ using v8::Undefined;
 using v8::Value;
 
 namespace gems {
-namespace {
 
-// This class builds the FunctionTemplate.
-class StructureTemplate {
-  public:
-    StructureTemplate() { Init(); }
-
-    ~StructureTemplate() {
-        template_.Dispose();
-        template_.Clear();
-    }
-
-    v8::Persistent<v8::FunctionTemplate> get_template() const {
-        return template_;
-    }
-
+struct StructureTemplate::Impl {
     static Handle<Value> Atoms(const Arguments& args);
     static Handle<Value> PrintTopologyFile(const Arguments& args);
     static Handle<Value> SetDihedral(const Arguments& args);
 
-  private:
-    void Init();
-
-    v8::Persistent<v8::FunctionTemplate> template_;
+    static Handle<Value> GetSize(Local<String> property,
+                                 const AccessorInfo& info);
 };
 
+namespace {
 
 bool kIsWrapperInitialized = false;
 
@@ -134,23 +121,20 @@ void StructureTemplate::Init() {
         local_template->InstanceTemplate();
     instance_template->SetInternalFieldCount(1);
 
-    //NODE_SET_PROTOTYPE_METHOD(instance_template, "atoms", Atoms);
-
-    instance_template->Set("set_dihedral",
-                           FunctionTemplate::New(SetDihedral));
-    //instance_template->Set("atoms",
-    //                       FunctionTemplate::New(Atoms));
-    instance_template->Set("print_topology_file",
-                           FunctionTemplate::New(PrintTopologyFile));
+    instance_template->SetAccessor(String::New("size"), Impl::GetSize);
 
     template_ = Persistent<FunctionTemplate>::New(local_template);
 
+    NODE_SET_PROTOTYPE_METHOD(template_, "print_topology_file",
+                              Impl::PrintTopologyFile);
 
-    NODE_SET_PROTOTYPE_METHOD(template_, "atoms", Atoms);
+    NODE_SET_PROTOTYPE_METHOD(template_, "set_dihedral",
+                              Impl::SetDihedral);
+    NODE_SET_PROTOTYPE_METHOD(template_, "atoms", Impl::Atoms);
 }
 
 // Modify and check errors.
-Handle<Value> StructureTemplate::SetDihedral(const Arguments& args) {
+Handle<Value> StructureTemplate::Impl::SetDihedral(const Arguments& args) {
     if (args.Length() != 5)
         return ThrowException(String::New("Invalid parameters"));
 
@@ -167,7 +151,7 @@ Handle<Value> StructureTemplate::SetDihedral(const Arguments& args) {
     return StructureWrapper::wrap(structure);
 }
 
-Handle<Value> StructureTemplate::Atoms(const Arguments& args) {
+Handle<Value> StructureTemplate::Impl::Atoms(const Arguments& args) {
     Local<Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
     Structure *structure = static_cast<Structure*>(wrap->Value());
@@ -178,7 +162,7 @@ Handle<Value> StructureTemplate::Atoms(const Arguments& args) {
         int int_val = args[0]->IntegerValue();
         if (int_val < 0 || int_val >= structure->size())
             return Undefined();
-        Structure::AtomPtr atom = structure->atoms(int_val);
+        Atom *atom = structure->atoms(int_val);
         return AtomWrapper::wrap(atom);
     } else if (args.Length() == 0) {
         Local<Array> array = Array::New(structure->size());
@@ -190,12 +174,29 @@ Handle<Value> StructureTemplate::Atoms(const Arguments& args) {
     return Undefined();
 }
 
-Handle<Value> StructureTemplate::PrintTopologyFile(const Arguments& args) {
+Handle<Value> StructureTemplate::Impl::PrintTopologyFile(
+        const Arguments& args) {
     Local<Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
     Structure *structure = static_cast<Structure*>(wrap->Value());
-    structure->print_amber_top_file(*String::Utf8Value(args[0]));
+
+    try {
+        structure->print_amber_top_file(*String::Utf8Value(args[0]));
+    } catch(const std::exception& e) {
+        return ThrowException(String::New(e.what()));
+    }
+
     return Undefined();
+}
+
+Handle<Value> StructureTemplate::Impl::GetSize(Local<String> property,
+                                               const AccessorInfo& info) {
+    HandleScope scope;
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Structure *structure = static_cast<Structure*>(wrap->Value());
+    return scope.Close(v8::Integer::New(structure->size()));
 }
 
 Handle<Value> StructureConstructor(const Arguments& args) {

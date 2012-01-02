@@ -1,30 +1,24 @@
 // Author: Robert Davis
 
-#ifndef GEMS_STRUCTURE_H_
-#define GEMS_STRUCTURE_H_
+#ifndef GEMS_PDB_STRUCTURE_H_
+#define GEMS_PDB_STRUCTURE_H_
 
 #include "v8.h"
 
 namespace gmml {
 
-class Structure;
+class PdbFileStructure;
 
 }
 
 namespace gems {
 
-v8::Handle<v8::Value> StructureConstructor(const v8::Arguments& args);
+v8::Handle<v8::Value> load_pdb(const v8::Arguments& args);
 
-class StructureWrapper {
+class PdbStructureWrapper {
   public:
     // Returns the javascript representation of the structure.
-    static v8::Handle<v8::Object> wrap(gmml::Structure *structure);
-
-    // This function frees memory that's allocated lazily by wrap().
-    // Since the wrapper will likely be used until the end of the program, it
-    // probably isn't necessary to clean up this memory, but this is
-    // included for thoroughness. 
-    static void destroy();
+    static v8::Handle<v8::Object> wrap(gmml::PdbFileStructure *structure);
 
   private:
     // This function is called by the garbage collector when only weak handles
@@ -33,11 +27,11 @@ class StructureWrapper {
 };
 
 // This class builds the FunctionTemplate.
-class StructureTemplate {
+class PdbStructureTemplate {
   public:
-    StructureTemplate() { Init(); }
+    PdbStructureTemplate() { Init(); }
 
-    ~StructureTemplate() {
+    ~PdbStructureTemplate() {
         template_.Dispose();
         template_.Clear();
     }
@@ -56,4 +50,4 @@ class StructureTemplate {
 
 }  // namespace gems
 
-#endif  // GEMS_STRUCTURE_H_
+#endif  // GEMS_PDB_STRUCTURE_H_

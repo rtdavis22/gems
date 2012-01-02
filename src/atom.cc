@@ -6,6 +6,9 @@
 
 #include "gmml/gmml.h"
 
+#include "element.h"
+
+using gmml::Atom;
 using gmml::Structure;
 
 using v8::AccessorInfo;
@@ -42,6 +45,11 @@ class AtomTemplate {
         template_.Clear();
     }
 
+    static Handle<Value> GetCharge(Local<String> property,
+                                   const AccessorInfo& info);
+    static void SetCharge(Local<String> property, Local<Value> value,
+                          const AccessorInfo& accessor_info);
+
     static Handle<Value> GetName(Local<String> property,
                                  const AccessorInfo& info);
     static void SetName(Local<String> property, Local<Value> value,
@@ -52,6 +60,15 @@ class AtomTemplate {
     static void SetCoordinate(Local<String> property, Local<Value> value,
                               const AccessorInfo& info);
 
+    static Handle<Value> GetElement(Local<String> property,
+                                    const AccessorInfo& info);
+    static void SetElement(Local<String> property, Local<Value> value,
+                           const AccessorInfo& info);
+
+    static Handle<Value> GetType(Local<String> property,
+                                 const AccessorInfo& info);
+    static void SetType(Local<String> property, Local<Value> value,
+                        const AccessorInfo& info);
   private:
     void Init();
 
@@ -60,7 +77,7 @@ class AtomTemplate {
 
 }  // namespace
 
-Handle<Object> AtomWrapper::wrap(Structure::AtomPtr atom) {
+Handle<Object> AtomWrapper::wrap(Atom *atom) {
     HandleScope handle_scope;
 
     static AtomTemplate atom_template;
@@ -69,28 +86,53 @@ Handle<Object> AtomWrapper::wrap(Structure::AtomPtr atom) {
     Persistent<Object> instance = Persistent<Object>::New(
         template_->InstanceTemplate()->NewInstance());
 
-    Structure::AtomPtr *wrappable_atom = new Structure::AtomPtr(atom);
+    //Structure::AtomPtr *wrappable_atom = new Structure::AtomPtr(atom);
 
-    instance.MakeWeak(wrappable_atom, callback);
+    instance.MakeWeak(atom, callback);
 
-    instance->SetInternalField(0, External::New(wrappable_atom));
+    instance->SetInternalField(0, External::New(atom));
 
     return handle_scope.Close(instance);
 }
 
 void AtomWrapper::callback(Persistent<Value> object, void *data) {
-    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(data);
-    delete atom;
+    //Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(data);
+    //delete atom;
     object.Dispose();
     object.Clear();
+}
+
+Handle<Value> AtomTemplate::GetCharge(Local<String> property,
+                                      const AccessorInfo& info) {
+    HandleScope scope;
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Atom *atom = static_cast<Atom*>(wrap->Value());
+
+    return scope.Close(Number::New(atom->charge()));
+
+}
+
+void AtomTemplate::SetCharge(Local<String> property, Local<Value> value,
+                             const AccessorInfo& info) {
+    if (!value->IsNumber()) {
+        ThrowException(String::New("Value is not a number"));
+        return;
+    }
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Atom *atom = static_cast<Atom*>(wrap->Value());
+    atom->set_charge(value->NumberValue());
 }
 
 Handle<Value> AtomTemplate::GetName(Local<String> property,
                                     const AccessorInfo& info) {
     Local<Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
-    return String::New((*atom)->name().c_str());
+    Atom *atom = static_cast<Atom*>(wrap->Value());
+    return String::New(atom->name().c_str());
 }
 
 void AtomTemplate::SetName(Local<String> property, Local<Value> value,
@@ -102,19 +144,19 @@ void AtomTemplate::SetName(Local<String> property, Local<Value> value,
 
     Local<Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
-    (*atom)->set_name(*String::Utf8Value(value));
+    Atom *atom = static_cast<Atom*>(wrap->Value());
+    atom->set_name(*String::Utf8Value(value));
 }
 
 Handle<Value> AtomTemplate::GetCoordinate(Local<String> property,
                                           const AccessorInfo& info) {
     Local<Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
+    Atom *atom = static_cast<Atom*>(wrap->Value());
     Local<Array> array = Array::New(3);
-    array->Set(0, Number::New((*atom)->coordinate().x));
-    array->Set(1, Number::New((*atom)->coordinate().y));
-    array->Set(2, Number::New((*atom)->coordinate().z));
+    array->Set(0, Number::New(atom->coordinate().x));
+    array->Set(1, Number::New(atom->coordinate().y));
+    array->Set(2, Number::New(atom->coordinate().z));
     return array;
 }
 
@@ -144,9 +186,56 @@ void AtomTemplate::SetCoordinate(Local<String> property, Local<Value> value,
 
     Local<Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure::AtomPtr *atom = static_cast<Structure::AtomPtr*>(wrap->Value());
+    Atom *atom = static_cast<Atom*>(wrap->Value());
 
-    (*atom)->set_coordinate(x, y, z);
+    atom->set_coordinate(x, y, z);
+}
+
+Handle<Value> AtomTemplate::GetElement(Local<String> property,
+                                       const AccessorInfo& info) {
+    HandleScope scope;
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Atom *atom = static_cast<Atom*>(wrap->Value());
+
+    Local<Object> global(v8::Context::GetCurrent()->Global());
+    Local<Object> obj = global->Get(String::New("Element"))->ToObject();
+
+    gmml::Element element = atom->element();
+
+    return scope.Close(obj->Get(String::New(ElementMap::get(element).c_str())));
+
+}
+
+void AtomTemplate::SetElement(Local<String> property, Local<Value> value,
+                              const AccessorInfo& info) {
+
+}
+
+Handle<Value> AtomTemplate::GetType(Local<String> property,
+                                    const AccessorInfo& info) {
+    HandleScope scope;
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Atom *atom = static_cast<Atom*>(wrap->Value());
+
+    return scope.Close(String::New(atom->type().c_str()));
+
+}
+
+void AtomTemplate::SetType(Local<String> property, Local<Value> value,
+                           const AccessorInfo& info) {
+    if (!value->IsString()) {
+        ThrowException(String::New("Value is not a string"));
+        return;
+    }
+
+    Local<Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    Atom *atom = static_cast<Atom*>(wrap->Value());
+    atom->set_type(*String::Utf8Value(value));
 }
 
 void AtomTemplate::Init() {
@@ -157,11 +246,20 @@ void AtomTemplate::Init() {
         local_template->InstanceTemplate();
     instance_template->SetInternalFieldCount(1);
 
+    instance_template->SetAccessor(String::New("charge"),
+                                   GetCharge, SetCharge);
+
     instance_template->SetAccessor(String::New("name"),
                                    GetName, SetName);
 
     instance_template->SetAccessor(String::New("coordinate"),
                                    GetCoordinate, SetCoordinate);
+
+    instance_template->SetAccessor(String::New("element"),
+                                   GetElement, SetElement);
+
+    instance_template->SetAccessor(String::New("type"),
+                                   GetType, SetType);
 
     template_ = Persistent<FunctionTemplate>::New(local_template);
 }
