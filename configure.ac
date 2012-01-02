@@ -25,8 +25,6 @@ AC_CONFIG_FILES([Makefile])
 
 # Checks for library functions.
 
-AC_DEFINE_UNQUOTED([PROJECT_ROOT], ["$(pwd)/"], [The root of the project.])
-
 AC_CONFIG_SUBDIRS([deps/gmml])
 
 ./gyp_configure
