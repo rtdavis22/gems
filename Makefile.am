@@ -32,6 +32,8 @@ EXTRA_DIST = \
   src/element.h \
   src/gems.cc \
   src/gems.h \
+  src/pdb_structure.cc \
+  src/pdb_structure.h \
   src/shell.cc \
   src/structure.cc \
   src/structure.h

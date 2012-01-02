@@ -65,6 +65,9 @@ void Gems::Init(v8::Handle<v8::ObjectTemplate> global) {
 v8::Handle<v8::Value> Gems::BuildGlycam(const v8::Arguments& args) {
     v8::HandleScope scope;
 
+    if (args.Length() != 1 || !args[0]->IsString())
+        return ThrowException(String::New("Invalid argument"));
+
     Structure *structure = NULL;
 
     v8::String::Utf8Value glycam_string(args[0]);
@@ -80,8 +83,16 @@ v8::Handle<v8::Value> Gems::BuildGlycam(const v8::Arguments& args) {
 Handle<Value> Gems::LoadLibraryFile(const v8::Arguments& args) {
     HandleScope scope;
 
+    if (args.Length() != 1 || !args[0]->IsString())
+        return ThrowException(String::New("Invalid argument"));
+
     String::Utf8Value file(args[0]);
-    gmml::load_library_file(*file);
+
+    try {
+        gmml::load_library_file(*file);
+    } catch(const std::exception& e) {
+        return ThrowException(String::New(e.what()));
+    }
 
     return scope.Close(v8::Undefined());
 }
@@ -89,8 +100,16 @@ Handle<Value> Gems::LoadLibraryFile(const v8::Arguments& args) {
 v8::Handle<v8::Value> Gems::LoadParameterFile(const v8::Arguments& args) {
     v8::HandleScope scope;
 
+    if (args.Length() != 1 || !args[0]->IsString())
+        return ThrowException(String::New("Invalid argument"));
+
     v8::String::Utf8Value file(args[0]);
-    gmml::load_parameter_file(*file);
+
+    try {
+        gmml::load_parameter_file(*file);
+    } catch(const std::exception& e) {
+        return ThrowException(String::New(e.what()));
+    }
 
     return scope.Close(v8::Undefined());
 }
@@ -98,14 +117,25 @@ v8::Handle<v8::Value> Gems::LoadParameterFile(const v8::Arguments& args) {
 v8::Handle<v8::Value> Gems::LoadPrepFile(const v8::Arguments& args) {
     v8::HandleScope scope;
 
+    if (args.Length() != 1 || !args[0]->IsString())
+        return ThrowException(String::New("Invalid argument"));
+
     v8::String::Utf8Value file(args[0]);
-    gmml::load_prep_file(*file);
+
+    try {
+        gmml::load_prep_file(*file);
+    } catch(const std::exception& e) {
+        return ThrowException(String::New(e.what()));
+    }
 
     return scope.Close(v8::Undefined());
 }
 
 v8::Handle<v8::Value> Gems::AddPath(const v8::Arguments& args) {
     v8::HandleScope scope;
+
+    if (args.Length() != 1 || !args[0]->IsString())
+        return ThrowException(String::New("Invalid argument"));
 
     v8::String::Utf8Value path(args[0]);
     gmml::add_path(*path);
