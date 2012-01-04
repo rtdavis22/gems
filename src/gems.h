@@ -12,14 +12,17 @@ class Gems {
     static void Init(v8::Handle<v8::ObjectTemplate> object_template);
 
     static v8::Handle<v8::Value> BuildGlycam(const v8::Arguments& args);
-    static v8::Handle<v8::Value> LoadLibraryFile(const v8::Arguments& args);
-    static v8::Handle<v8::Value> LoadParameterFile(const v8::Arguments& args);
-    static v8::Handle<v8::Value> LoadPrepFile(const v8::Arguments& args);
     static v8::Handle<v8::Value> AddPath(const v8::Arguments& args);
 
     static v8::Handle<v8::Value> AddResidueMapping(const v8::Arguments& args);
     static v8::Handle<v8::Value> AddHeadMapping(const v8::Arguments& args);
     static v8::Handle<v8::Value> AddTailMapping(const v8::Arguments& args);
+
+    static v8::Handle<v8::Value> Measure(const v8::Arguments& args);
+};
+
+struct Object {
+  virtual ~Object() {}
 };
 
 }  // namespace gems

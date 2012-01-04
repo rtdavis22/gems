@@ -5,7 +5,7 @@
 
 #include "v8.h"
 
-#include "boost/shared_ptr.hpp"
+#include "gems.h"
 
 // External forward-declarations
 namespace gmml {
@@ -17,11 +17,20 @@ class Structure;
 
 namespace gems {
 
+// Should wrap() go in here?
+struct GemsAtom : public Object {
+    GemsAtom(gmml::Structure *structure, int index) : structure(structure),
+                                                      index(index) {}
+
+    gmml::Atom *atom();
+
+    gmml::Structure *structure;
+    int index;
+};
+
 class AtomWrapper {
   public:
-    // The parameter should have type Structure::AtomPtr, but unfortunately
-    // you can't forward declare a typedef within a class.
-    static v8::Handle<v8::Object> wrap(gmml::Atom *atom);
+    static v8::Handle<v8::Object> wrap(GemsAtom *atom);
 
   private:
     static void callback(v8::Persistent<v8::Value> object, void *data);

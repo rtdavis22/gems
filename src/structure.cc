@@ -22,7 +22,7 @@ using v8::FunctionTemplate;
 using v8::Handle;
 using v8::HandleScope;
 using v8::Local;
-using v8::Object;
+//using v8::Object;
 using v8::ObjectTemplate;
 using v8::Persistent;
 using v8::String;
@@ -47,11 +47,11 @@ bool kIsWrapperInitialized = false;
 
 // This is a map to manage the objects created by the wrapper, so we don't
 // create a new object for existing structures.
-map<Structure*, Persistent<Object> > *kStructureObjectManager = NULL;
+map<Structure*, Persistent<v8::Object> > *kStructureObjectManager = NULL;
 
 // This is lazily invoked by StructureWrapper::wrap.
 void initialize_wrapper() {
-    kStructureObjectManager = new map<Structure*, Persistent<Object> >;
+    kStructureObjectManager = new map<Structure*, Persistent<v8::Object> >;
     kIsWrapperInitialized = true;
 }
 
@@ -65,7 +65,7 @@ void StructureWrapper::destroy() {
     }
 }
 
-Handle<Object> StructureWrapper::wrap(Structure *structure) {
+Handle<v8::Object> StructureWrapper::wrap(Structure *structure) {
     HandleScope handle_scope;
 
     static StructureTemplate structure_template;
@@ -75,14 +75,14 @@ Handle<Object> StructureWrapper::wrap(Structure *structure) {
     if (!kIsWrapperInitialized)
         initialize_wrapper();
 
-    map<Structure*, Persistent<Object> >::iterator it =
+    map<Structure*, Persistent<v8::Object> >::iterator it =
         kStructureObjectManager->lower_bound(structure);
 
     if (it != kStructureObjectManager->end() &&
             !kStructureObjectManager->key_comp()(structure, it->first))
         return it->second;
 
-    Persistent<Object> instance = Persistent<Object>::New(
+    Persistent<v8::Object> instance = Persistent<v8::Object>::New(
         template_->InstanceTemplate()->NewInstance());
 
     instance.MakeWeak(structure, callback);
@@ -138,7 +138,7 @@ Handle<Value> StructureTemplate::Impl::SetDihedral(const Arguments& args) {
     if (args.Length() != 5)
         return ThrowException(String::New("Invalid parameters"));
 
-    Local<Object> self = args.Holder();
+    Local<v8::Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
     Structure *structure = static_cast<Structure*>(wrap->Value());
 
@@ -152,7 +152,7 @@ Handle<Value> StructureTemplate::Impl::SetDihedral(const Arguments& args) {
 }
 
 Handle<Value> StructureTemplate::Impl::Atoms(const Arguments& args) {
-    Local<Object> self = args.Holder();
+    Local<v8::Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
     Structure *structure = static_cast<Structure*>(wrap->Value());
 
@@ -162,12 +162,11 @@ Handle<Value> StructureTemplate::Impl::Atoms(const Arguments& args) {
         int int_val = args[0]->IntegerValue();
         if (int_val < 0 || int_val >= structure->size())
             return Undefined();
-        Atom *atom = structure->atoms(int_val);
-        return AtomWrapper::wrap(atom);
+        return AtomWrapper::wrap(new GemsAtom(structure, int_val));
     } else if (args.Length() == 0) {
         Local<Array> array = Array::New(structure->size());
         for (int i = 0; i < structure->size(); i++) {
-            array->Set(i, AtomWrapper::wrap(structure->atoms(i)));
+            array->Set(i, AtomWrapper::wrap(new GemsAtom(structure, i)));
         }
         return array;
     }
@@ -176,7 +175,7 @@ Handle<Value> StructureTemplate::Impl::Atoms(const Arguments& args) {
 
 Handle<Value> StructureTemplate::Impl::PrintTopologyFile(
         const Arguments& args) {
-    Local<Object> self = args.Holder();
+    Local<v8::Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
     Structure *structure = static_cast<Structure*>(wrap->Value());
 
@@ -193,7 +192,7 @@ Handle<Value> StructureTemplate::Impl::GetSize(Local<String> property,
                                                const AccessorInfo& info) {
     HandleScope scope;
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
     Structure *structure = static_cast<Structure*>(wrap->Value());
     return scope.Close(v8::Integer::New(structure->size()));

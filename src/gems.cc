@@ -3,11 +3,19 @@
 #include "gems.h"
 
 #include <exception>
+#include <vector>
 
 #include "gmml/gmml.h"
 
 #include "pdb_structure.h"
 #include "structure.h"
+
+#include "atom.h"
+#include "build.h"
+#include "coordinate.h"
+#include "file_io.h"
+
+using std::vector;
 
 using gmml::Structure;
 
@@ -37,17 +45,20 @@ void Gems::Init(v8::Handle<v8::ObjectTemplate> global) {
     global->Set(v8::String::New("add_path"),
                 v8::FunctionTemplate::New(AddPath));
 
+    global->Set(v8::String::New("build"),
+                v8::FunctionTemplate::New(Build::JSBuild));
+
     global->Set(v8::String::New("build_glycam"),
                 v8::FunctionTemplate::New(BuildGlycam));
 
     global->Set(String::New("load_library_file"),
-                FunctionTemplate::New(LoadLibraryFile));
+                FunctionTemplate::New(FileIO::LoadLibraryFile));
 
     global->Set(v8::String::New("load_parameter_file"),
-                v8::FunctionTemplate::New(LoadParameterFile));
+                v8::FunctionTemplate::New(FileIO::LoadParameterFile));
 
     global->Set(v8::String::New("load_prep_file"),
-                v8::FunctionTemplate::New(LoadPrepFile));
+                v8::FunctionTemplate::New(FileIO::LoadPrepFile));
 
     global->Set(v8::String::New("load_pdb"),
                 v8::FunctionTemplate::New(load_pdb));
@@ -60,6 +71,8 @@ void Gems::Init(v8::Handle<v8::ObjectTemplate> global) {
 
     global->Set(String::New("add_tail_mapping"),
                 v8::FunctionTemplate::New(AddTailMapping));
+
+    global->Set(String::New("measure"), v8::FunctionTemplate::New(Measure));
 }
 
 v8::Handle<v8::Value> Gems::BuildGlycam(const v8::Arguments& args) {
@@ -78,57 +91,6 @@ v8::Handle<v8::Value> Gems::BuildGlycam(const v8::Arguments& args) {
     }
 
     return scope.Close(StructureWrapper::wrap(structure));
-}
-
-Handle<Value> Gems::LoadLibraryFile(const v8::Arguments& args) {
-    HandleScope scope;
-
-    if (args.Length() != 1 || !args[0]->IsString())
-        return ThrowException(String::New("Invalid argument"));
-
-    String::Utf8Value file(args[0]);
-
-    try {
-        gmml::load_library_file(*file);
-    } catch(const std::exception& e) {
-        return ThrowException(String::New(e.what()));
-    }
-
-    return scope.Close(v8::Undefined());
-}
-
-v8::Handle<v8::Value> Gems::LoadParameterFile(const v8::Arguments& args) {
-    v8::HandleScope scope;
-
-    if (args.Length() != 1 || !args[0]->IsString())
-        return ThrowException(String::New("Invalid argument"));
-
-    v8::String::Utf8Value file(args[0]);
-
-    try {
-        gmml::load_parameter_file(*file);
-    } catch(const std::exception& e) {
-        return ThrowException(String::New(e.what()));
-    }
-
-    return scope.Close(v8::Undefined());
-}
-
-v8::Handle<v8::Value> Gems::LoadPrepFile(const v8::Arguments& args) {
-    v8::HandleScope scope;
-
-    if (args.Length() != 1 || !args[0]->IsString())
-        return ThrowException(String::New("Invalid argument"));
-
-    v8::String::Utf8Value file(args[0]);
-
-    try {
-        gmml::load_prep_file(*file);
-    } catch(const std::exception& e) {
-        return ThrowException(String::New(e.what()));
-    }
-
-    return scope.Close(v8::Undefined());
 }
 
 v8::Handle<v8::Value> Gems::AddPath(const v8::Arguments& args) {
@@ -178,7 +140,45 @@ v8::Handle<v8::Value> Gems::AddTailMapping(const Arguments& args) {
                            *String::Utf8Value(args[1]));
 
     return scope.Close(v8::Undefined());
+}
 
+Handle<Value> Gems::Measure(const Arguments& args) {
+    HandleScope scope;
+
+    if (args.Length() < 2 || args.Length() > 4) {
+        return ThrowException(String::New("Function requires 2-4 arguments."));
+    }
+
+    vector<gmml::Coordinate*> coordinates(args.Length(), NULL);
+                                          
+    for (int i = 0; i < args.Length(); i++) {
+        gmml::Coordinate *coordinate = ExtractCoordinate()(args[i]);
+        if (coordinate == NULL) {
+            for (int j = 0; j < i; j++)
+                delete coordinates[j];
+            return ThrowException(String::New("Invalid arguments."));
+        }
+        coordinates[i] = coordinate;
+    }
+
+    double measure = 0.0;
+
+    if (coordinates.size() == 2) {
+        measure = gmml::measure(*coordinates[0], *coordinates[1]);
+    } else if (coordinates.size() == 3) {
+        measure = gmml::measure(*coordinates[0], *coordinates[1],
+                                *coordinates[2]);
+        measure = gmml::to_degrees(measure);
+    } else if (coordinates.size() == 4) {
+        measure = gmml::measure(*coordinates[0], *coordinates[1],
+                                *coordinates[2], *coordinates[3]);
+        measure = gmml::to_degrees(measure);
+    }
+
+    for (int i = 0; i < coordinates.size(); i++)
+        delete coordinates[i];
+
+    return scope.Close(v8::Number::New(measure));
 }
 
 }  // namespace gems

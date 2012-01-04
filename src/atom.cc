@@ -20,7 +20,7 @@ using v8::Handle;
 using v8::HandleScope;
 using v8::Local;
 using v8::Number;
-using v8::Object;
+// Don't try to but v8::Object here. It conflicts with gems::Object.
 using v8::ObjectTemplate;
 using v8::Persistent;
 using v8::String;
@@ -29,6 +29,13 @@ using v8::Undefined;
 using v8::Value;
 
 namespace gems {
+
+gmml::Atom *GemsAtom::atom() {
+    if (index < 0 || index >= structure->size())
+        return NULL;
+    return structure->atoms(index);
+}
+
 namespace {
 
 // This class builds the function template.
@@ -77,13 +84,13 @@ class AtomTemplate {
 
 }  // namespace
 
-Handle<Object> AtomWrapper::wrap(Atom *atom) {
+Handle<v8::Object> AtomWrapper::wrap(GemsAtom *atom) {
     HandleScope handle_scope;
 
     static AtomTemplate atom_template;
     Persistent<FunctionTemplate> template_ = atom_template.get_template();
 
-    Persistent<Object> instance = Persistent<Object>::New(
+    Persistent<v8::Object> instance = Persistent<v8::Object>::New(
         template_->InstanceTemplate()->NewInstance());
 
     //Structure::AtomPtr *wrappable_atom = new Structure::AtomPtr(atom);
@@ -106,11 +113,11 @@ Handle<Value> AtomTemplate::GetCharge(Local<String> property,
                                       const AccessorInfo& info) {
     HandleScope scope;
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
 
-    return scope.Close(Number::New(atom->charge()));
+    return scope.Close(Number::New(atom->atom()->charge()));
 
 }
 
@@ -121,18 +128,18 @@ void AtomTemplate::SetCharge(Local<String> property, Local<Value> value,
         return;
     }
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
-    atom->set_charge(value->NumberValue());
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
+    atom->atom()->set_charge(value->NumberValue());
 }
 
 Handle<Value> AtomTemplate::GetName(Local<String> property,
                                     const AccessorInfo& info) {
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
-    return String::New(atom->name().c_str());
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
+    return String::New(atom->atom()->name().c_str());
 }
 
 void AtomTemplate::SetName(Local<String> property, Local<Value> value,
@@ -142,21 +149,21 @@ void AtomTemplate::SetName(Local<String> property, Local<Value> value,
         return;
     }
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
-    atom->set_name(*String::Utf8Value(value));
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
+    atom->atom()->set_name(*String::Utf8Value(value));
 }
 
 Handle<Value> AtomTemplate::GetCoordinate(Local<String> property,
                                           const AccessorInfo& info) {
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
     Local<Array> array = Array::New(3);
-    array->Set(0, Number::New(atom->coordinate().x));
-    array->Set(1, Number::New(atom->coordinate().y));
-    array->Set(2, Number::New(atom->coordinate().z));
+    array->Set(0, Number::New(atom->atom()->coordinate().x));
+    array->Set(1, Number::New(atom->atom()->coordinate().y));
+    array->Set(2, Number::New(atom->atom()->coordinate().z));
     return array;
 }
 
@@ -184,25 +191,25 @@ void AtomTemplate::SetCoordinate(Local<String> property, Local<Value> value,
     double y = array->Get(1)->ToNumber()->Value();
     double z = array->Get(2)->ToNumber()->Value();
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
 
-    atom->set_coordinate(x, y, z);
+    atom->atom()->set_coordinate(x, y, z);
 }
 
 Handle<Value> AtomTemplate::GetElement(Local<String> property,
                                        const AccessorInfo& info) {
     HandleScope scope;
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
 
-    Local<Object> global(v8::Context::GetCurrent()->Global());
-    Local<Object> obj = global->Get(String::New("Element"))->ToObject();
+    Local<v8::Object> global(v8::Context::GetCurrent()->Global());
+    Local<v8::Object> obj = global->Get(String::New("Element"))->ToObject();
 
-    gmml::Element element = atom->element();
+    gmml::Element element = atom->atom()->element();
 
     return scope.Close(obj->Get(String::New(ElementMap::get(element).c_str())));
 
@@ -217,11 +224,11 @@ Handle<Value> AtomTemplate::GetType(Local<String> property,
                                     const AccessorInfo& info) {
     HandleScope scope;
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
 
-    return scope.Close(String::New(atom->type().c_str()));
+    return scope.Close(String::New(atom->atom()->type().c_str()));
 
 }
 
@@ -232,10 +239,10 @@ void AtomTemplate::SetType(Local<String> property, Local<Value> value,
         return;
     }
 
-    Local<Object> self = info.Holder();
+    Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Atom *atom = static_cast<Atom*>(wrap->Value());
-    atom->set_type(*String::Utf8Value(value));
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
+    atom->atom()->set_type(*String::Utf8Value(value));
 }
 
 void AtomTemplate::Init() {

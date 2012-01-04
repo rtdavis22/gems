@@ -42,7 +42,7 @@
       }],
       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
         'cflags': [ '-Wall', '-pthread', ],
-        'cflags_cc': [ '-fno-rtti'],
+        #'cflags_cc': [ '-fno-rtti'],
         'ldflags': [ '-pthread', ],
         'conditions': [
           [ 'target_arch=="ia32"', {
@@ -64,7 +64,7 @@
           'GCC_DYNAMIC_NO_PIC': 'NO',               # No -mdynamic-no-pic
                                                     # (Equivalent to -fPIC)
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',        # -fno-exceptions
-          'GCC_ENABLE_CPP_RTTI': 'NO',              # -fno-rtti
+          #'GCC_ENABLE_CPP_RTTI': 'NO',              # -fno-rtti
           'GCC_ENABLE_PASCAL_STRINGS': 'NO',        # No -mpascal-strings
           # GCC_INLINES_ARE_PRIVATE_EXTERN maps to -fvisibility-inlines-hidden
           'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',

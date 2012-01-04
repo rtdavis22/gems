@@ -22,7 +22,7 @@ using v8::FunctionTemplate;
 using v8::Handle;
 using v8::HandleScope;
 using v8::Local;
-using v8::Object;
+//using v8::Object;
 using v8::ObjectTemplate;
 using v8::Persistent;
 using v8::String;
@@ -32,13 +32,13 @@ using v8::Value;
 
 namespace gems {
 
-Handle<Object> PdbStructureWrapper::wrap(PdbFileStructure *structure) {
+Handle<v8::Object> PdbStructureWrapper::wrap(PdbFileStructure *structure) {
     HandleScope handle_scope;
 
     static PdbStructureTemplate structure_template;
     Persistent<FunctionTemplate> template_ = structure_template.get_template();
 
-    Persistent<Object> instance = Persistent<Object>::New(
+    Persistent<v8::Object> instance = Persistent<v8::Object>::New(
         template_->InstanceTemplate()->NewInstance());
 
     instance.MakeWeak(structure, callback);

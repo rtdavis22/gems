@@ -41,7 +41,10 @@
 
       'sources': [
         '../src/atom.cc',
+        '../src/build.cc',
+        '../src/coordinate.cc',
         '../src/element.cc',
+        '../src/file_io.cc',
         '../src/gems.cc',
         '../src/pdb_structure.cc',
         '../src/shell.cc',
