@@ -47,6 +47,7 @@
         '../src/file_io.cc',
         '../src/gems.cc',
         '../src/pdb_structure.cc',
+        '../src/residue.cc',
         '../src/shell.cc',
         '../src/structure.cc',
       ],

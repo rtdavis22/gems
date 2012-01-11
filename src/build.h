@@ -3,21 +3,19 @@
 
 #include "v8.h"
 
-namespace gmml {
-
-class Structure;
-
-}  // namespace gmml
-
 namespace gems {
+
+class GemsStructure;
 
 struct Build {
     static v8::Handle<v8::Value> JSBuild(const v8::Arguments& args);
 
-    gmml::Structure *operator()(v8::Handle<v8::Value> value);
+    GemsStructure *operator()(v8::Handle<v8::Value> value);
 
-    gmml::Structure *operator()(v8::Array *array);
-    gmml::Structure *operator()(v8::Handle<v8::Object> object);
+    GemsStructure *operator()(v8::Handle<v8::String> v8_string);
+
+    GemsStructure *operator()(v8::Array *array);
+    GemsStructure *operator()(v8::Handle<v8::Object> object);
 };
 
 }  // namespace gems

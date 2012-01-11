@@ -24,6 +24,7 @@ struct GemsAtom : public Object {
 
     gmml::Atom *atom();
 
+    // Should this be a GemsStructure instead?
     gmml::Structure *structure;
     int index;
 };

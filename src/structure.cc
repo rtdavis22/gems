@@ -8,6 +8,7 @@
 #include "gmml/gmml.h"
 
 #include "atom.h"
+#include "residue.h"
 
 using std::map;
 
@@ -32,11 +33,47 @@ using v8::Value;
 
 namespace gems {
 
+int GemsStructure::attach_from_head(GemsStructure *structure,
+                                    int tail_residue) {
+    combine(structure);
+    return structure_->attach_from_head(structure->structure(), tail_residue,
+                                        structure->parent_tail_name());
+}
+
+int GemsStructure::attach(GemsStructure *structure) {
+    combine(structure);
+    return structure_->attach(structure->structure());
+}
+
+int GemsStructure::append(GemsStructure *structure) {
+    combine(structure);
+    return structure_->append(structure->structure());
+}
+
+void GemsStructure::combine(GemsStructure *structure) {
+    int cur_size = structure_->residue_count();
+    const std::map<std::string, int>& id_map = structure->id_map();
+    for (std::map<std::string, int>::const_iterator it = id_map.begin();
+            it != id_map.end(); ++it) {
+        id_map_[it->first] = it->second + cur_size;
+    }
+}
+
+int GemsStructure::map_id(const std::string& id) const {
+    std::map<std::string, int>::const_iterator it;
+    if ((it = id_map_.find(id)) != id_map_.end())
+        return it->second;
+    return -1;
+}
+
 struct StructureTemplate::Impl {
     static Handle<Value> Atoms(const Arguments& args);
+    static Handle<Value> Minimize(const Arguments& args);
+    static Handle<Value> PrintCoordinateFile(const Arguments& args);
     static Handle<Value> PrintTopologyFile(const Arguments& args);
+    static Handle<Value> Residues(const Arguments& args);
     static Handle<Value> SetDihedral(const Arguments& args);
-
+    static Handle<Value> Solvate(const Arguments& args);
     static Handle<Value> GetSize(Local<String> property,
                                  const AccessorInfo& info);
 };
@@ -47,11 +84,11 @@ bool kIsWrapperInitialized = false;
 
 // This is a map to manage the objects created by the wrapper, so we don't
 // create a new object for existing structures.
-map<Structure*, Persistent<v8::Object> > *kStructureObjectManager = NULL;
+map<GemsStructure*, Persistent<v8::Object> > *kStructureObjectManager = NULL;
 
 // This is lazily invoked by StructureWrapper::wrap.
 void initialize_wrapper() {
-    kStructureObjectManager = new map<Structure*, Persistent<v8::Object> >;
+    kStructureObjectManager = new map<GemsStructure*, Persistent<v8::Object> >;
     kIsWrapperInitialized = true;
 }
 
@@ -65,7 +102,7 @@ void StructureWrapper::destroy() {
     }
 }
 
-Handle<v8::Object> StructureWrapper::wrap(Structure *structure) {
+Handle<v8::Object> StructureWrapper::wrap(GemsStructure *structure) {
     HandleScope handle_scope;
 
     static StructureTemplate structure_template;
@@ -75,7 +112,7 @@ Handle<v8::Object> StructureWrapper::wrap(Structure *structure) {
     if (!kIsWrapperInitialized)
         initialize_wrapper();
 
-    map<Structure*, Persistent<v8::Object> >::iterator it =
+    map<GemsStructure*, Persistent<v8::Object> >::iterator it =
         kStructureObjectManager->lower_bound(structure);
 
     if (it != kStructureObjectManager->end() &&
@@ -96,7 +133,7 @@ Handle<v8::Object> StructureWrapper::wrap(Structure *structure) {
 
 
 void StructureWrapper::callback(Persistent<Value> object, void *data) {
-    Structure *structure = static_cast<Structure*>(data);
+    GemsStructure *structure = static_cast<GemsStructure*>(data);
     kStructureObjectManager->erase(structure);
     delete structure;
     object.Dispose();
@@ -125,36 +162,122 @@ void StructureTemplate::Init() {
 
     template_ = Persistent<FunctionTemplate>::New(local_template);
 
+    NODE_SET_PROTOTYPE_METHOD(template_, "minimize", Impl::Minimize);
+
+    NODE_SET_PROTOTYPE_METHOD(template_, "print_coordinate_file",
+                              Impl::PrintCoordinateFile);
+
     NODE_SET_PROTOTYPE_METHOD(template_, "print_topology_file",
                               Impl::PrintTopologyFile);
 
-    NODE_SET_PROTOTYPE_METHOD(template_, "set_dihedral",
-                              Impl::SetDihedral);
+    NODE_SET_PROTOTYPE_METHOD(template_, "set_dihedral", Impl::SetDihedral);
+
+    NODE_SET_PROTOTYPE_METHOD(template_, "solvate", Impl::Solvate);
+
     NODE_SET_PROTOTYPE_METHOD(template_, "atoms", Impl::Atoms);
+    NODE_SET_PROTOTYPE_METHOD(template_, "residues", Impl::Residues);
 }
 
-// Modify and check errors.
+Handle<Value> StructureTemplate::Impl::Minimize(const Arguments& args) {
+    if (args.Length() != 1 || !args[0]->IsString())
+        return v8::ThrowException(v8::String::New("Invalid argument"));
+
+    std::string file(*v8::String::Utf8Value(args[0]));
+
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsStructure *gems_structure = static_cast<GemsStructure*>(wrap->Value());
+
+    gmml::Structure *structure = gems_structure->structure();
+    gmml::MinimizationResults *results = structure->minimize(file);
+
+    if (results == NULL)
+        return v8::ThrowException(v8::String::New("Error in minimization"));
+
+    return v8::Undefined();
+}
+
 Handle<Value> StructureTemplate::Impl::SetDihedral(const Arguments& args) {
-    if (args.Length() != 5)
+    if (args.Length() != 9)
         return ThrowException(String::New("Invalid parameters"));
 
     Local<v8::Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure *structure = static_cast<Structure*>(wrap->Value());
+    GemsStructure *structure = static_cast<GemsStructure*>(wrap->Value());
 
-    structure->set_dihedral(args[0]->IntegerValue(),
-                            args[1]->IntegerValue(),
-                            args[2]->IntegerValue(),
-                            args[3]->IntegerValue(),
-                            args[4]->NumberValue());
+    int residues[4];
+    for (int i = 0; i < 4; i ++) {
+        if (args[2*i]->IsNumber()) {
+            residues[i] = args[2*i]->IntegerValue();
+        } else if (args[2*i]->IsString()) {
+            int index = structure->map_id(*v8::String::Utf8Value(args[2*i]));
+            if (index == -1)
+                return v8::ThrowException(v8::String::New("Id not found"));
+            residues[i] = index;
+        } else {
+            return v8::ThrowException(v8::String::New("Invalid arguments"));
+        }
+        if (!args[2*i + 1]->IsString())
+            return v8::ThrowException(v8::String::New("Invalid arguments"));
+    }
+
+    if (!args[8]->IsNumber())
+        return v8::ThrowException(v8::String::New("Invalid angle measure."));
+
+    structure->structure()->set_dihedral(residues[0],
+                                         *v8::String::Utf8Value(args[1]),
+                                         residues[1],
+                                         *v8::String::Utf8Value(args[3]),
+                                         residues[2],
+                                         *v8::String::Utf8Value(args[5]),
+                                         residues[3],
+                                         *v8::String::Utf8Value(args[7]),
+                                         args[8]->NumberValue());
 
     return StructureWrapper::wrap(structure);
+}
+
+Handle<Value> StructureTemplate::Impl::Solvate(const Arguments& args) {
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsStructure *gems_structure = static_cast<GemsStructure*>(wrap->Value());
+    gmml::Structure *structure = gems_structure->structure();
+
+    if (!args[0]->IsString()) {
+        return v8::ThrowException(String::New("Invalid argument 1"));
+    }
+
+    std::string solvent_name = *v8::String::Utf8Value(args[0]);
+    gmml::Structure *solvent = gmml::build(solvent_name);
+    if (solvent == NULL) {
+        return v8::ThrowException(String::New("Invalid solvent"));
+    }
+
+    if (!args[1]->IsNumber()) {
+        return v8::ThrowException(v8::String::New("Invalid argument 2"));
+    }
+
+    double distance = args[1]->NumberValue();
+
+    double closeness = 1.0;
+
+    if (args.Length() > 2) {
+        if (!args[2]->IsNumber())
+            return v8::ThrowException(v8::String::New("Invalid argument 3"));
+        closeness = args[2]->NumberValue();
+    }
+
+    gmml::SolvatedStructure *solvated = gmml::solvate(*structure, *solvent,
+                                                      distance, closeness);
+
+    return StructureWrapper::wrap(new GemsStructure(solvated));
 }
 
 Handle<Value> StructureTemplate::Impl::Atoms(const Arguments& args) {
     Local<v8::Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure *structure = static_cast<Structure*>(wrap->Value());
+    GemsStructure *gems_structure = static_cast<GemsStructure*>(wrap->Value());
+    gmml::Structure *structure = gems_structure->structure();
 
     if (args.Length() == 1) {
         if (!args[0]->IsNumber())
@@ -173,14 +296,31 @@ Handle<Value> StructureTemplate::Impl::Atoms(const Arguments& args) {
     return Undefined();
 }
 
+Handle<Value> StructureTemplate::Impl::PrintCoordinateFile(
+        const Arguments& args) {
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsStructure *structure = static_cast<GemsStructure*>(wrap->Value());
+
+    try {
+        structure->structure()->print_coordinate_file(
+                *String::Utf8Value(args[0]));
+    } catch(const std::exception& e) {
+        return ThrowException(String::New(e.what()));
+    }
+
+    return Undefined();
+}
+
 Handle<Value> StructureTemplate::Impl::PrintTopologyFile(
         const Arguments& args) {
     Local<v8::Object> self = args.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure *structure = static_cast<Structure*>(wrap->Value());
+    GemsStructure *structure = static_cast<GemsStructure*>(wrap->Value());
 
     try {
-        structure->print_amber_top_file(*String::Utf8Value(args[0]));
+        structure->structure()->print_amber_top_file(
+                *String::Utf8Value(args[0]));
     } catch(const std::exception& e) {
         return ThrowException(String::New(e.what()));
     }
@@ -194,8 +334,37 @@ Handle<Value> StructureTemplate::Impl::GetSize(Local<String> property,
 
     Local<v8::Object> self = info.Holder();
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-    Structure *structure = static_cast<Structure*>(wrap->Value());
-    return scope.Close(v8::Integer::New(structure->size()));
+    GemsStructure *structure = static_cast<GemsStructure*>(wrap->Value());
+    return scope.Close(v8::Integer::New(structure->structure()->size()));
+}
+
+Handle<Value> StructureTemplate::Impl::Residues(const Arguments& args) {
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsStructure *gems_structure = static_cast<GemsStructure*>(wrap->Value());
+    gmml::Structure *structure = gems_structure->structure();
+
+    if (args.Length() != 1) {
+        return v8::ThrowException(
+                v8::String::New("Function takes 1 argument"));
+    }
+
+    if (args[0]->IsNumber()) {
+        int index = args[0]->IntegerValue();
+        if (index < 0 || index > structure->residue_count())
+            return v8::Undefined();
+        return ResidueWrapper::wrap(new GemsResidue(structure, index));
+    } else if (args[0]->IsString()) {
+        std::string id(*v8::String::Utf8Value(args[0]));
+        int index = gems_structure->map_id(id);
+        if (index == -1) {
+            std::string error = "Id " + id + " not found.";
+            return v8::ThrowException(v8::String::New(error.c_str()));
+        }
+        return ResidueWrapper::wrap(new GemsResidue(structure, index));
+    }
+
+    return v8::Undefined();
 }
 
 Handle<Value> StructureConstructor(const Arguments& args) {
@@ -207,7 +376,7 @@ Handle<Value> StructureConstructor(const Arguments& args) {
 
     Structure *structure = new Structure;
 
-    return scope.Close(StructureWrapper::wrap(structure));
+    return scope.Close(StructureWrapper::wrap(new GemsStructure(structure)));
 }
 
 }  // namespace gems

@@ -40,6 +40,8 @@ EXTRA_DIST = \
   src/gems.h \
   src/pdb_structure.cc \
   src/pdb_structure.h \
+  src/residue.cc \
+  src/residue.h \
   src/shell.cc \
   src/structure.cc \
   src/structure.h

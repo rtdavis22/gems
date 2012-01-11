@@ -90,7 +90,7 @@ v8::Handle<v8::Value> Gems::BuildGlycam(const v8::Arguments& args) {
         return v8::ThrowException(v8::String::New(e.what()));
     }
 
-    return scope.Close(StructureWrapper::wrap(structure));
+    return scope.Close(StructureWrapper::wrap(new GemsStructure(structure)));
 }
 
 v8::Handle<v8::Value> Gems::AddPath(const v8::Arguments& args) {
