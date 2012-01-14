@@ -28,6 +28,9 @@ class ResidueTemplate {
         template_.Clear();
     }
 
+    static v8::Handle<v8::Value> GetIndex(v8::Local<v8::String> property,
+                                          const v8::AccessorInfo& info);
+
     static v8::Handle<v8::Value> GetName(v8::Local<v8::String> property,
                                          const v8::AccessorInfo& info);
     static void SetName(v8::Local<v8::String> property,
@@ -80,10 +83,21 @@ void ResidueTemplate::Init() {
             local_template->InstanceTemplate();
     instance_template->SetInternalFieldCount(1);
 
+    instance_template->SetAccessor(v8::String::New("index"), GetIndex);
+
     instance_template->SetAccessor(v8::String::New("name"),
                                    GetName, SetName);
 
     template_ = v8::Persistent<v8::FunctionTemplate>::New(local_template);
+}
+
+v8::Handle<v8::Value> ResidueTemplate::GetIndex(v8::Local<v8::String> property,
+                                                const v8::AccessorInfo& info) {
+    v8::Local<v8::Object> self = info.Holder();
+    v8::Local<v8::External> wrap =
+            v8::Local<v8::External>::Cast(self->GetInternalField(0));
+    GemsResidue *residue = static_cast<GemsResidue*>(wrap->Value());
+    return v8::Integer::New(residue->index);
 }
 
 v8::Handle<v8::Value> ResidueTemplate::GetName(v8::Local<v8::String> property,

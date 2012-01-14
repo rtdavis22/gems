@@ -51,7 +51,7 @@ class GemsStructure : public Object {
 
     int map_id(const std::string& id) const;
 
-    gmml::Structure *structure() { return structure_; }
+    virtual gmml::Structure *structure() { return structure_; }
     bool is_parent_tail_set() const { return is_parent_tail_set_; }
     std::string parent_tail_name() const { return parent_tail_name_; }
     const std::map<std::string, int>& id_map() const { return id_map_; }

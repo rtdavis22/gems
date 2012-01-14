@@ -57,6 +57,9 @@ class AtomTemplate {
     static void SetCharge(Local<String> property, Local<Value> value,
                           const AccessorInfo& accessor_info);
 
+    static Handle<Value> GetIndex(Local<String> property,
+                                  const AccessorInfo& info);
+
     static Handle<Value> GetName(Local<String> property,
                                  const AccessorInfo& info);
     static void SetName(Local<String> property, Local<Value> value,
@@ -132,6 +135,14 @@ void AtomTemplate::SetCharge(Local<String> property, Local<Value> value,
     Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
     GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
     atom->atom()->set_charge(value->NumberValue());
+}
+
+Handle<Value> AtomTemplate::GetIndex(Local<String> property,
+                                     const AccessorInfo& info) {
+    Local<v8::Object> self = info.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
+    return v8::Integer::New(atom->index);
 }
 
 Handle<Value> AtomTemplate::GetName(Local<String> property,
@@ -255,6 +266,8 @@ void AtomTemplate::Init() {
 
     instance_template->SetAccessor(String::New("charge"),
                                    GetCharge, SetCharge);
+
+    instance_template->SetAccessor(String::New("index"), GetIndex);
 
     instance_template->SetAccessor(String::New("name"),
                                    GetName, SetName);
