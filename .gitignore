@@ -1,5 +1,5 @@
 *.pyc
 .svn*
-deps/v8
 build/gyp
 *.o
+deps

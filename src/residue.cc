@@ -1,5 +1,6 @@
 // Author: Robert Davis`
 
+#include "atom.h"
 #include "residue.h"
 
 #include "gmml/gmml.h"
@@ -36,6 +37,11 @@ class ResidueTemplate {
     static void SetName(v8::Local<v8::String> property,
                         v8::Local<v8::Value> value,
                         const v8::AccessorInfo& info);
+
+    static v8::Handle<v8::Value> Atoms(const v8::Arguments& args);
+
+    static v8::Handle<v8::Value> GetSize(v8::Local<v8::String> property,
+                                         const v8::AccessorInfo& info);
 
   private:
     void Init();
@@ -88,7 +94,51 @@ void ResidueTemplate::Init() {
     instance_template->SetAccessor(v8::String::New("name"),
                                    GetName, SetName);
 
+    instance_template->SetAccessor(v8::String::New("size"), GetSize);
+
     template_ = v8::Persistent<v8::FunctionTemplate>::New(local_template);
+
+    NODE_SET_PROTOTYPE_METHOD(template_, "atoms", Atoms);
+}
+
+v8::Handle<v8::Value> ResidueTemplate::GetSize(v8::Local<v8::String> property,
+                                               const v8::AccessorInfo& info) {
+    v8::HandleScope scope;
+
+    v8::Local<v8::Object> self = info.Holder();
+    v8::Local<v8::External> wrap =
+            v8::Local<v8::External>::Cast(self->GetInternalField(0));
+    GemsResidue *residue = static_cast<GemsResidue*>(wrap->Value());
+    return scope.Close(v8::Integer::New(residue->residue()->size()));
+}
+
+
+v8::Handle<v8::Value> ResidueTemplate::Atoms(const v8::Arguments& args) {
+    v8::Local<v8::Object> self = args.Holder();
+    v8::Local<v8::External> wrap =
+            v8::Local<v8::External>::Cast(self->GetInternalField(0));
+    GemsResidue *gems_residue = static_cast<GemsResidue*>(wrap->Value());
+    gmml::Residue *residue = gems_residue->residue();
+
+    int index = -1;
+    if (args[0]->IsString()) {
+        v8::Local<v8::Value> atom_name_v8 = args[0]->ToString();
+        std::string atom_name(*v8::String::Utf8Value(atom_name_v8));
+        index = residue->get_index(atom_name);
+    } else if (args[0]->IsNumber()) {
+        index = args[0]->ToNumber()->Value();
+    }
+
+    if (index < 0 || index >= residue->size()) {
+        return v8::ThrowException(v8::String::New("Invalid argument"));
+    }
+
+    int structure_index =
+            gems_residue->structure->get_atom_index(gems_residue->index,
+                                                      index);
+
+    return AtomWrapper::wrap(new GemsAtom(gems_residue->structure,
+                                          structure_index));
 }
 
 v8::Handle<v8::Value> ResidueTemplate::GetIndex(v8::Local<v8::String> property,

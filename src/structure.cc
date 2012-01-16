@@ -3,11 +3,13 @@
 #include "structure.h"
 
 #include <map>
+#include <string>
 #include <utility>
 
 #include "gmml/gmml.h"
 
 #include "atom.h"
+#include "build.h"
 #include "residue.h"
 
 using std::map;
@@ -68,12 +70,15 @@ int GemsStructure::map_id(const std::string& id) const {
 
 struct StructureTemplate::Impl {
     static Handle<Value> Atoms(const Arguments& args);
+    static Handle<Value> Attach(const Arguments& args);
     static Handle<Value> Minimize(const Arguments& args);
     static Handle<Value> PrintCoordinateFile(const Arguments& args);
     static Handle<Value> PrintTopologyFile(const Arguments& args);
     static Handle<Value> Residues(const Arguments& args);
     static Handle<Value> SetDihedral(const Arguments& args);
+    static Handle<Value> SetHead(const Arguments& args);
     static Handle<Value> Solvate(const Arguments& args);
+    static Handle<Value> SetTail(const Arguments& args);
     static Handle<Value> GetSize(Local<String> property,
                                  const AccessorInfo& info);
 };
@@ -160,7 +165,13 @@ void StructureTemplate::Init() {
     NODE_SET_PROTOTYPE_METHOD(template_, "print_topology_file",
                               Impl::PrintTopologyFile);
 
+    NODE_SET_PROTOTYPE_METHOD(template_, "attach", Impl::Attach);
+
     NODE_SET_PROTOTYPE_METHOD(template_, "set_dihedral", Impl::SetDihedral);
+
+    NODE_SET_PROTOTYPE_METHOD(template_, "set_head", Impl::SetHead);
+
+    NODE_SET_PROTOTYPE_METHOD(template_, "set_tail", Impl::SetTail);
 
     NODE_SET_PROTOTYPE_METHOD(template_, "solvate", Impl::Solvate);
 
@@ -184,7 +195,11 @@ Handle<Value> StructureTemplate::Impl::Minimize(const Arguments& args) {
     if (results == NULL)
         return v8::ThrowException(v8::String::New("Error in minimization"));
 
-    return v8::Undefined();
+    Handle<v8::Object> ret = v8::Object::New();
+    ret->Set(v8::String::New("energy"),
+             v8::NumberObject::New(results->energy));
+
+    return ret;
 }
 
 Handle<Value> StructureTemplate::Impl::SetDihedral(const Arguments& args) {
@@ -226,6 +241,105 @@ Handle<Value> StructureTemplate::Impl::SetDihedral(const Arguments& args) {
 
     return StructureWrapper::wrap(structure);
 }
+
+Handle<Value> StructureTemplate::Impl::SetHead(const Arguments& args) {
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsStructure *gems_structure = static_cast<GemsStructure*>(wrap->Value());
+    gmml::Structure *structure = gems_structure->structure();
+
+    if (args.Length() != 2) {
+        //error
+    }
+
+    Local<String> v8_name = args[1]->ToString();
+    std::string atom_name(*v8::String::Utf8Value(v8_name));
+
+    int residue_index = -1;
+    if (args[0]->IsNumber()) {
+        residue_index = args[0]->ToNumber()->Value();
+    } else if (args[0]->IsString()) {
+        std::string id(*v8::String::Utf8Value(args[0]->ToString()));
+        residue_index = gems_structure->map_id(id);
+    }
+
+    if (residue_index == -1) {
+        return v8::ThrowException(v8::String::New("Invalid residue"));
+    }
+
+    int head_index = structure->get_atom_index(residue_index, atom_name);
+
+    if (head_index == -1) {
+        return v8::ThrowException(v8::String::New("Invalid atom"));
+    }
+
+    structure->set_head(head_index);
+
+    return v8::Undefined();
+}
+
+Handle<Value> StructureTemplate::Impl::SetTail(const Arguments& args) {
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsStructure *gems_structure = static_cast<GemsStructure*>(wrap->Value());
+    gmml::Structure *structure = gems_structure->structure();
+
+    if (args.Length() != 2) {
+        //error
+    }
+
+    Local<String> v8_name = args[1]->ToString();
+    std::string atom_name(*v8::String::Utf8Value(v8_name));
+
+    int residue_index = -1;
+    if (args[0]->IsNumber()) {
+        residue_index = args[0]->ToNumber()->Value();
+    } else if (args[0]->IsString()) {
+        std::string id(*v8::String::Utf8Value(args[0]->ToString()));
+        residue_index = gems_structure->map_id(id);
+    }
+
+    if (residue_index == -1) {
+        return v8::ThrowException(v8::String::New("Invalid residue"));
+    }
+
+    int tail_index = structure->get_atom_index(residue_index, atom_name);
+
+    if (tail_index == -1) {
+        return v8::ThrowException(v8::String::New("Invalid atom"));
+    }
+
+    structure->set_tail(tail_index);
+
+    return v8::Undefined();
+}
+
+Handle<Value> StructureTemplate::Impl::Attach(const Arguments& args) {
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsStructure *gems_structure = static_cast<GemsStructure*>(wrap->Value());
+    gmml::Structure *structure = gems_structure->structure();
+
+    GemsStructure *that = Build()(args[0]);
+    if (that == NULL) {
+        return v8::ThrowException(v8::String::New("Invalid argument"));
+    }
+
+    int ret_val = -1;
+    if (that->is_parent_tail_set()) {
+        int tail_residue = structure->get_residue_index(structure->tail());
+        ret_val = gems_structure->attach_from_head(that, tail_residue);
+    } else {
+        ret_val = gems_structure->attach(that);
+    }
+
+    if (ret_val == -1) {
+        return v8::ThrowException(v8::String::New("Error in attachment"));
+    }
+
+    return v8::Undefined();
+}
+
 
 Handle<Value> StructureTemplate::Impl::Solvate(const Arguments& args) {
     Local<v8::Object> self = args.Holder();

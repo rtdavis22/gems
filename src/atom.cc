@@ -79,6 +79,9 @@ class AtomTemplate {
                                  const AccessorInfo& info);
     static void SetType(Local<String> property, Local<Value> value,
                         const AccessorInfo& info);
+
+    static Handle<Value> Bonds(const Arguments& args);
+
   private:
     void Init();
 
@@ -256,6 +259,23 @@ void AtomTemplate::SetType(Local<String> property, Local<Value> value,
     atom->atom()->set_type(*String::Utf8Value(value));
 }
 
+Handle<Value> AtomTemplate::Bonds(const v8::Arguments& args) {
+    HandleScope scope;
+
+    Local<v8::Object> self = args.Holder();
+    Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
+    GemsAtom *atom = static_cast<GemsAtom*>(wrap->Value());
+
+    const gmml::Structure::AdjList& bonds = atom->structure->bonds(atom->index);
+
+    Local<Array> atoms = Array::New(bonds.size());
+    for (int i = 0; i < bonds.size(); i++) {
+        atoms->Set(i, AtomWrapper::wrap(new GemsAtom(atom->structure,
+                                                     bonds[i])));
+    }
+    return atoms;
+}
+
 void AtomTemplate::Init() {
     HandleScope handle_scope;
 
@@ -282,6 +302,8 @@ void AtomTemplate::Init() {
                                    GetType, SetType);
 
     template_ = Persistent<FunctionTemplate>::New(local_template);
+
+    NODE_SET_PROTOTYPE_METHOD(template_, "bonds", Bonds);
 }
 
 }  // namespace gems
