@@ -1,0 +1,8 @@
+Constant Volume Minimization
+ # Control section
+ &cntrl
+  imin = 1, ntpr = 500, 
+  ntb = 1, ntp = 0, 
+  maxcyc = 300, ncyc = 150, 
+ /
+
