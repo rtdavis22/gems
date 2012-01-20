@@ -16,7 +16,7 @@ var glycan = build([
   substructure
 ]);
 
-
+// This syntax is changing very soon to use object properties for arguments.
 var solvated = glycan.solvate("TIP3PBOX", 10.0, 1.0);
 
 // Works with anything:

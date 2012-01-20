@@ -93,17 +93,17 @@ for (var i in ResidueMap) {
     add_residue_mapping(i, ResidueMap[i]);
 }
 
-add_path("../../gmml/localdat/");
+add_path("dat/");
 
-load_parameter_file("param_files/parm99.dat.mod");
-load_parameter_file("param_files/Glycam_06g.dat");
+load_parameter_file("parm99.dat");
+load_parameter_file("Glycam_06h.dat");
 
-load_prep_file("prep_files/Glycam_06.prep");
-load_prep_file("prep_files/Neu5Gc_a_06.prep");
-load_prep_file("prep_files/sulfate.prep");
-load_prep_file("prep_files/HOH.prep");
+load_prep_file("Glycam_06.prep");
+load_prep_file("Neu5Gc_a_06.prep");
+load_prep_file("sulfate.prep");
+load_prep_file("HOH.prep");
 
-load_library_file("library_files/all_amino94.lib");
-load_library_file("library_files/all_aminoct94.lib");
-load_library_file("library_files/all_aminont94.lib");
-load_library_file("library_files/tip3pbox.off");
+load_library_file("all_amino94.lib");
+load_library_file("all_aminoct94.lib");
+load_library_file("all_aminont94.lib");
+load_library_file("tip3pbox.off");

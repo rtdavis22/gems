@@ -3,7 +3,7 @@ load("glycam.js");
 // For reference:
 // DGalpNAcb1-4DGlcpNAcb1-2DManpa1-6[DGlcpNAcb1-4[DGalpNAcb1-4DGlcpNAcb1-2]DManpa1-3]DManpb1-4DGlcpNAcb1-4DGlcpNAcb1-OH
 
-// This is the LEaP way of building stuff. It is NOT encouraged in GEMS.
+// This is the LEaP way of building stuff. It is NOT encouraged in gems.
 
 var glycan = build(["ROH", "4YB"]);
 

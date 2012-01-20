@@ -33,13 +33,6 @@ protein.attach(glycan);
 
 // You probably want to set some dihedrals here.
 
-//protein.print_topology_file("15.top");
-//protein.print_coordinate_file("15.rst");
+protein.print_topology_file("15.top");
+protein.print_coordinate_file("15.rst");
 
-
-// And we can solvate it...
-print("solvating");
-var solvated = protein.solvate("TIP3PBOX", 10.0, 1.0);
-print("writing top");
-solvated.print_topology_file("15.top");
-solvated.print_coordinate_file("15.rst");

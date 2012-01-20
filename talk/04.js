@@ -3,7 +3,14 @@ load("glycam.js");
 // For reference:
 // "DGalpNAcb1-4DGlcpNAcb1-2DManpa1-6[DGlcpNAcb1-4[DGalpNAcb1-4DGlcpNAcb1-2]DManpa1-3]DManpb1-4DGlcpNAcb1-4DGlcpNAcb1-OH"
 
-// Left bracket starts a branch, right bracket ends the branch.
+// This is a more intuitive way to represent structures. The structures is
+// represented as a sequence of substructures. Branches are denoted by
+// brackets: open brackets start branches and close brackets end branches
+// (similar to the above sequence). Substructures are represented as
+// JSON objects (a set of key-value pairs). A string like "ROH" is shorthand
+// for { code: "ROH" }. The "at" property specifies where this substructure
+// attaches to its parent substructure. If not specified, the parent's tail
+// atom is used.
 var glycan = build([
   "ROH",
   "4YB",

@@ -2,6 +2,8 @@ load("glycam.js");
 
 var substructure = [ { at: "02", code: "4YB" }, "0VB" ];
 
+// The id property is a string associated with the substructure that is used
+// to uniquely identify it.
 var glycan = build([
   "ROH",
   "4YB",

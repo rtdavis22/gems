@@ -27,13 +27,11 @@ glycan.attach("2MA");
 glycan.set_tail(8, "O2");
 glycan.attach(substructure);
 
-
 glycan.set_dihedral("two", "C2",
                     "two", "C1",
                     "one", "O4",
                     "one", "C4",
                     180.0);
-
 
 glycan.print_topology_file("07.top");
 glycan.print_coordinate_file("07.rst");

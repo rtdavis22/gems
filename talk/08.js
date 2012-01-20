@@ -38,7 +38,6 @@ print("atom type:", atom.type);
 print("atom charge:", atom.charge);
 print("atom coordinate:", atom.coordinate);
 
-
 // We can modify the atom:
 atom.charge += 0.03;
 
@@ -59,9 +58,8 @@ for (var i = 0; i < residue.size; i++) {
         atom.type = "C1";
 }
 
-// This won't work!
+// This won't work! (you'll get an insufficient parameter error)
 // glycan.print_topology_file("wrong.top");
-
 
 // We can also get bonding information.
 // The bonds() function returns an array of adjacent atoms:
