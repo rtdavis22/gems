@@ -1,4 +1,4 @@
-To build:
+To create the executable:
     ./configure
     make
 
