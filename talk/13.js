@@ -2,7 +2,7 @@ load("glycam.js");
 
 // This is the same as the LEaP command. It uses the mappings in the
 // configuration file to fill in missing atoms and set atom types and charges.
-var protein1 = load_pdb("1RVZ_New.pdb");
+var protein1 = load_pdb("dat/1RVZ_New.pdb");
 
 // I can use the protein just like any other structure:
 // protein.set_dihedral(...);
@@ -13,7 +13,7 @@ var protein1 = load_pdb("1RVZ_New.pdb");
 
 // This overrides the HIS -> HIE mapping in the configuration file for this
 // protein.
-var protein2 = load_pdb("1RVZ_New.pdb", [
+var protein2 = load_pdb("dat/1RVZ_New.pdb", [
     { from: "HIS", to: "HIP" }
 ]);
 

@@ -4,7 +4,7 @@ load("glycam.js");
 // HIS -> HIE mapping in glycam.js
 // The other mappings are individual mappings of single residues.
 // Individual mappings take precedence over global mappings.
-var protein = load_pdb("1RVZ_New.pdb", [
+var protein = load_pdb("dat/1RVZ_New.pdb", [
     { from: "HIS", to: "HIP" },
     { from: { chain_id: 'A', res_num: 12 }, to: "HIE" },
     { from: { chain_id: 'A', res_num: 8 }, to: "CYX" },

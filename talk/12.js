@@ -16,7 +16,7 @@ var glycan = build([
   substructure
 ]);
 
-var results = glycan.minimize("min.in");
+var results = glycan.minimize("dat/min.in");
 
 print("minimized energy:", results.energy);
 

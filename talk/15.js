@@ -2,9 +2,9 @@
 
 load("glycam.js");
 
-// Load the protein from the pdb file and add a custom mapping from a particular
-// ASN residue to NLN.
-var protein = load_pdb("1RVZ_New.pdb", [
+// Load the protein from the pdb file and add a custom mapping from a
+// particular ASN residue to NLN.
+var protein = load_pdb("dat/1RVZ_New.pdb", [
     { from: { chain_id: 'A', res_num: 12 }, to: "HIP" },
     { from: { chain_id: 'A', res_num: 8 }, to: "CYX" },
     { from: { chain_id: 'B', res_num: 637 }, to: "CYX" },
