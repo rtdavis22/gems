@@ -1,3 +1,5 @@
+// Author: Robert Davis
+
 #ifndef GMML_INTERNAL_STRUCTURE_H_
 #define GMML_INTERNAL_STRUCTURE_H_
 
@@ -17,7 +19,7 @@ class CoordinateFile;
 class Graph;
 class IndexedResidue;
 struct MinimizationResults;
-class ParameterFileSet;
+class ParameterSet;
 class PdbFile;
 struct PdbMappingInfo;
 class Residue;
@@ -31,23 +33,14 @@ class Structure {
 
     Structure();
 
+    Structure(const Residue *residue);
+
     virtual ~Structure();
 
     //
     // Construction methods
     //
     virtual Structure *clone() const;
-
-    static Structure *build_from_pdb(const PdbFile& pdb_file,
-                                     const PdbMappingInfo& mapping_info);
-
-    // Build the Structure represented by the pdb file. This does not do
-    // anything "smart", like infer bonding.
-    static Structure *build_from_pdb(const PdbFile& pdb_file);
-
-    // 
-    static Structure *build_from_pdb(const PdbFile& pdb_file,
-                                     bool infer_protein_bonds);
 
     //
     // Iteration
@@ -90,6 +83,9 @@ class Structure {
     // Translate a given residue.
     void translate_residue(int residue_index, double x, double y, double z);
 
+    // Translate all residues after the given residue index.
+    void translate_residues_after(int index, double x, double y, double z);
+
     // Set the dihedral of the atoms with the given atom indices. Note that the
     // dihedral angle should be given in degrees.
     void set_dihedral(size_t atom1, size_t atom2, size_t atom3, size_t atom4,
@@ -109,22 +105,12 @@ class Structure {
     void set_residue_angle(int atom1, int atom2, int atom3, int residue_index,
                            double radians);
 
-    // The following three functions set the glycosidic angles between the
-    // residue with the given residue index and it's parent (the residue at
-    // the reducing end). It should be noted that these make some basic
-    // assumptions about the names of some atoms. For example, the n'th carbon
-    // should be named Cn.
-    //
-    // Phi: H1-C1-O-CX'
-    //      C1-C2-O-CX'
-    bool set_phi(int residue_index, double degrees);
+    void set_angle_in_range(int start_atom, int end_atom, int atom1, int atom2,
+                            int atom3, double radians);
 
-    // Psi: C1-O-CX'-HX'
-    //      C1-O-C6'-C5'
-    bool set_psi(int residue_index, double degrees);
-
-    // Omega: O-C6'-C5'-O5'
-    bool set_omega(int residue_index, double degrees);
+    // Modify all residues including and after the given residue index.
+    void set_angle_after(int residue, int atom1, int atom2, int atom3,
+                         double radians);
 
     //
     // Augmenting operations
@@ -158,18 +144,50 @@ class Structure {
     // the current structure according to StructureAttach below, and a bond
     // is created.
     //
-    // Attach |new_atom_name| of residue |new_residue| to |target_atom_name| of
-    // residue |residue_index|. The index of the appended residue within the
+    // Attach |head_name| of residue |new_residue| to |tail_name| of
+    // residue |residue|. The index of the appended residue within the
     // structure is returned.
-    virtual int attach(Residue *new_residue, const std::string& new_atom_name,
-                       int residue_index, const std::string& target_atom_name);
 
-    // This is similar to the above function, but the residue's prep file code
-    // is given.
-    virtual int attach(const std::string& prep_code,
-                       const std::string& new_atom_name,
-                       int residue_index,
-                       const std::string& target_atom_name);
+    // Attach residue's head atom to the structure's tail atom.
+    int attach(const Structure *structure);
+    int attach(const Residue *residue);
+    int attach(const std::string& code);
+
+    int attach(const Structure *new_structure,
+               int head_residue, const std::string& head_name,
+               int tail_residue, const std::string& tail_name);
+
+    // Attach the atom in the residue with the given head name to the atom in
+    // the given target residue of the structure with the specified tail name.
+    int attach(const Residue *residue, const std::string& head_name,
+               int target_residue, const std::string& tail_name);
+
+    // Attach the atom in the residue with the given head index to the
+    // atom in the structure with the given tail index.
+    int attach(const Structure *residue, int head, int tail);
+
+    // Attach the head atom in the residue to the atom with the given tail
+    // name in the specified target residue of the structure.
+    int attach_from_head(const Structure *structure, int target_residue,
+                         const std::string& tail_name);
+
+    // Attach the head atom in the residue to the given tail atom index of
+    // the structure.
+    int attach_from_head(const Structure *structure, int tail_atom);
+
+    int attach_from_head(const std::string& code, const std::string& tail_atom);
+
+    int attach_to_tail(const Structure *structure, int head_residue,
+                       const std::string& head_name);
+
+    // Attach the atom in the residue with the given name to the structure's
+    // tail atom.
+    int attach_to_tail(const Residue *residue, const std::string& head_name);
+
+    // Attach the atom in the residue with the given head index to the
+    // structure's tail atom.
+    int attach_to_tail(const Structure *residue, int head_index);
+
 
     //
     // Removal operations
@@ -186,13 +204,11 @@ class Structure {
     // Advanced modification operations
     //
     // Minimize the structure with SANDER using the given SANDER input
-    // minimization file and representation of the results of the
+    // minimization file and return a representation of the results of the
     // minimization. NULL is returned if the minimization failed for any
     // reason.
     MinimizationResults *minimize(const std::string& input_file);
 
-    // THIS should be overrided in BoxedStructure.
-    //virtual SolvatedStructure *solvate(
 
     //
     // Atom-related query operations
@@ -253,8 +269,10 @@ class Structure {
     int head() const { return head_; }
     int tail() const { return tail_; }
 
-    // This might be a good way to check if a solvent that's a Structure
-    // has a box.
+    // This may not be the best place for this, but right now it is here and
+    // virtual so that box information can be retrieved from structures with
+    // static type Structure and dynamic type LibraryFileStructure or
+    // SolvatedStructure.
     virtual const Box *box() const { return NULL; }
 
     //
@@ -264,6 +282,13 @@ class Structure {
 
     void set_head(int head) { head_ = head; }
     void set_tail(int tail) { tail_ = tail; }
+
+    void set_head(int residue, const std::string& atom) {
+        head_ = get_atom_index(residue, atom);
+    }
+    void set_tail(int residue, const std::string& atom) {
+        tail_ = get_atom_index(residue, atom);
+    }
 
     //
     // File operations
@@ -280,7 +305,7 @@ class Structure {
 
     // Return the AMBER topology file that represents this structure, using
     // the given parameter set.
-    AmberTopFile *build_amber_top_file(const ParameterFileSet& parm_set) const;
+    AmberTopFile *build_amber_top_file(const ParameterSet& parm_set) const;
 
     // Return the AMBER topology file that represents this structure, using
     // the parameter set in the default environment.
@@ -289,7 +314,7 @@ class Structure {
     // Write the AMBER topology file to a file with the given name, using
     // the given parameter set.
     void print_amber_top_file(const std::string& file_name,
-                              const ParameterFileSet& parm_set) const;
+                              const ParameterSet& parm_set) const;
 
     // Write the AMBER topology file to a file with the given name, using
     // the parameter set in the default environment.
@@ -342,19 +367,19 @@ class Structure {
 };
 
 
-// The is the default attachment functor. It repositions the residue and
-// attaches it to the structure. If you need to make other modifications to
-// the structure, it is recommended that you make a wrapper around this
-// functor.
-// TODO: This functor should be changed to be general enough to only
-// depend on the hybridizations of the atoms.
+// This functor attaches a copy of a structure to another structure. A bond is
+// formed between the specified head atom of the attached structure and the
+// specified tail atom of the structure being attached to. The new bond's
+// length as well as the angles and dihedrals involved in the connection are
+// set appropriately using the parameter set of the default environment, if
+// possible.
+// TODO: This needs to be smarter about how it sets the angles and dihedrals,
+// especially when the parameter set doesn't have this information, but I'm
+// not sure what to do about it.
 class StructureAttach {
   public:
-    // The return value is -1 if the attachment failed for any reason, such as
-    // the atom names don't exist in the residue.
-    int operator()(Structure& structure, Residue *residue,
-                    const std::string& new_atom_name, int residue_index,
-                    const std::string& atom_name) const;
+    int operator()(Structure& structure, const Structure *new_structure,
+                   int head, int tail) const;
 
   private:
     struct Impl;

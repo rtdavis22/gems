@@ -20,7 +20,7 @@ namespace gmml {
 class AmberTopFile;
 class AmberTopSection;
 class BoxedStructure;
-class ParameterFileSet;
+class ParameterSet;
 class SolvatedStructure;
 class Structure;
 
@@ -115,31 +115,33 @@ class AmberTopBuilder {
     static const double kDefaultScee = 1.2;
     static const double kDefaultScnb = 2.0;
 
+    static const char *kDefaultTitle;
+
     // Almost all information contained in the topology file comes from
     // a set of parameter files.
     AmberTopBuilder();
-    explicit AmberTopBuilder(const ParameterFileSet& parameter_file_set);
+    explicit AmberTopBuilder(const ParameterSet& parameter_file_set);
 
     // Builds the topology file for a structure, and optionally includes a title
     // for the TITLE section.
     AmberTopFile *build(const Structure& structure,
                         const std::string& title) const;
     AmberTopFile *build(const Structure& structure) const {
-        return build(structure, "");
+        return build(structure, kDefaultTitle);
     }
 
     // Boxed structures include a boxed section.
     AmberTopFile *build(const BoxedStructure& boxed_structure,
                         const std::string& title) const;
     AmberTopFile *build(const BoxedStructure& boxed_structure) const {
-        return build(boxed_structure, "");
+        return build(boxed_structure, kDefaultTitle);
     }
 
     // Solvated structures include some special sections. See below.
     AmberTopFile *build(const SolvatedStructure& solvated_structure,
                         const std::string& title) const;
     AmberTopFile *build(const SolvatedStructure& solvated_structure) const {
-        return build(solvated_structure, "");
+        return build(solvated_structure, kDefaultTitle);
     }
 
   private:
@@ -247,7 +249,7 @@ class AmberTopBuilder {
     void type_error(const std::string& type1, const std::string& type2,
                     const std::string& type3, const std::string& type4) const;
 
-    const ParameterFileSet& parameter_file_set_;
+    const ParameterSet& parameter_file_set_;
 
     DISALLOW_COPY_AND_ASSIGN(AmberTopBuilder);
 };

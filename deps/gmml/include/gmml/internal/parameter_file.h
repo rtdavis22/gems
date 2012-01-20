@@ -56,9 +56,9 @@ class ParameterFile {
     DISALLOW_COPY_AND_ASSIGN(ParameterFile);
 };
 
-class ParameterFileSet {
+class ParameterSet {
   public:
-    ParameterFileSet();
+    ParameterSet();
 
     void load(const ParameterFile& parameter_file);
 
@@ -89,7 +89,7 @@ class ParameterFileSet {
     class Impl;
     std::auto_ptr<Impl> impl_;
 
-    DISALLOW_COPY_AND_ASSIGN(ParameterFileSet);
+    DISALLOW_COPY_AND_ASSIGN(ParameterSet);
 };
 
 struct ParameterFileAtom {
@@ -141,6 +141,9 @@ struct ParameterFileAngle {
     double angle;
 };
 
+// In the file, the periodicity of a term is negative if the next term is to
+// be grouped with it. In this case the periodicity in this data structure
+// is negative as well.
 struct ParameterFileDihedralTerm {
     ParameterFileDihedralTerm() : factor(kNotSet), force_constant(kNotSet),
                                   phase(kNotSet), periodicity(kNotSet) {}
