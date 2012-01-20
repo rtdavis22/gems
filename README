@@ -1,0 +1,5 @@
+To build:
+    ./configure
+    make
+
+Run 'sh autogen.sh' first if you don't have a configure file.
