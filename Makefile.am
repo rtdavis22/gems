@@ -38,13 +38,13 @@ EXTRA_DIST = \
   build/gems.gyp \
   build/run_gyp \
   gyp_configure \
-  js/atom.js \
-  js/core.js \
-  js/environment.js \
-  js/glycam.js \
-  js/pdb.js \
-  js/structure.js \
-  js/utils.js \
+  src/js/atom.js \
+  src/js/core.js \
+  src/js/environment.js \
+  src/js/glycam.js \
+  src/js/pdb.js \
+  src/js/structure.js \
+  src/js/utils.js \
   src/atom.cc \
   src/atom.h \
   src/environment.cc \
@@ -56,7 +56,7 @@ EXTRA_DIST = \
   src/pdb.cc \
   src/pdb.h \
   src/shell.cc \
-  src/hell.h \
+  src/shell.h \
   src/structure.cc \
   src/structure.h
 
