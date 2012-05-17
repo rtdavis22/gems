@@ -1,5 +1,6 @@
 *.pyc
 .svn*
 build/gyp
+build/options.gypi
 *.o
 deps

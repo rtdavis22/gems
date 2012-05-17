@@ -1,4 +1,4 @@
-// Copyright 2011 the V8 project authors. All rights reserved.
+// Copyright 2012 the V8 project authors. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
@@ -63,43 +63,30 @@ v8::Handle<v8::String> ReadFile(const char* name);
 void ReportException(v8::TryCatch* handler);
 
 
-void load_file(const char *file) {
-    v8::HandleScope handle_scope;
-    v8::Handle<v8::String> source = ReadFile(file);
-    if (source.IsEmpty()) return;
-    if (!ExecuteString(source, v8::String::New(file), false, false)) {
-
-    }
-}
-
-
 static bool run_shell;
 
 
 int main(int argc, char* argv[]) {
   v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
   run_shell = (argc == 1);
-  v8::HandleScope handle_scope;
-  v8::Persistent<v8::Context> context = CreateShellContext();
-  
+  int result;
+  {
+    v8::HandleScope handle_scope;
+    v8::Persistent<v8::Context> context = CreateShellContext();
+    if (context.IsEmpty()) {
+      printf("Error creating context\n");
+      return 1;
+    }
+    context->Enter();
 
+    gems::Gems::load_files();
 
-  if (context.IsEmpty()) {
-    printf("Error creating context\n");
-    return 1;
+    result = RunMain(argc, argv);
+    if (run_shell) RunShell(context);
+    context->Exit();
+    context.Dispose();
   }
-  context->Enter();
-
-  //load_file(root + "src/element.js");
-
-  int result = RunMain(argc, argv);
-
-
-  if (run_shell) RunShell(context);
-  context->Exit();
-  context.Dispose();
   v8::V8::Dispose();
-
   return result;
 }
 
@@ -126,9 +113,7 @@ v8::Persistent<v8::Context> CreateShellContext() {
   // Bind the 'version' function
   global->Set(v8::String::New("version"), v8::FunctionTemplate::New(Version));
 
-  gems::Gems::Init(global);
-
-  //load_file("/home/robert/Documents/gems/src/element.js");
+  gems::Gems::init(global);
 
   return v8::Context::New(NULL, global);
 }
@@ -359,4 +344,12 @@ void ReportException(v8::TryCatch* try_catch) {
       printf("%s\n", stack_trace_string);
     }
   }
+}
+
+void ExecFile(const char *file_name) {
+  v8::Handle<v8::String> source = ReadFile(file_name);
+  if (source.IsEmpty()) {
+    printf("Error reading '%s'\n", file_name);
+  }
+  ExecuteString(source, v8::String::New(file_name), false, true);
 }

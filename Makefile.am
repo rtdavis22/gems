@@ -2,6 +2,8 @@ BUILDTYPE ?= Release
 
 SUBDIRS = deps/gmml
 
+PREFIX = /usr/local
+
 all-local: out/Makefile
 	$(MAKE) -C out BUILDTYPE=$(BUILDTYPE)
 	-ln -fs out/$(BUILDTYPE)/gems gems
@@ -20,31 +22,44 @@ dist-hook:
 	svn export http://v8.googlecode.com/svn/trunk/ $(distdir)/deps/v8
 	svn export http://gyp.googlecode.com/svn/trunk/ $(distdir)/build/gyp
 
+install: all-local
+	install -m 0755 -d $(PREFIX)/bin
+	install -m 0755 gems $(PREFIX)/bin/gems
+	for f in $$(find src/js/ dat -type f); \
+	do \
+	    DIR=`dirname $$f` || exit 1; \
+	    install -m 0755 -d $(PREFIX)/share/gems/$$DIR || exit 1; \
+	    install -m 0644 $$f $(PREFIX)/share/gems/$$f || exit 1; \
+	done
+
 EXTRA_DIST = \
   autogen.sh \
   build/common.gypi \
   build/gems.gyp \
   build/run_gyp \
   gyp_configure \
+  js/atom.js \
+  js/core.js \
+  js/environment.js \
+  js/glycam.js \
+  js/pdb.js \
+  js/structure.js \
+  js/utils.js \
   src/atom.cc \
   src/atom.h \
-  src/build.cc \
-  src/build.h \
-  src/coordinate.cc \
-  src/coordinate.h \
-  src/element.cc \
-  src/element.h \
-  src/file_io.cc \
-  src/file_io.h \
+  src/environment.cc \
+  src/environment.h \
   src/gems.cc \
   src/gems.h \
-  src/pdb_structure.cc \
-  src/pdb_structure.h \
-  src/residue.cc \
-  src/residue.h \
+  src/glycam.cc \
+  src/glycam.h \
+  src/pdb.cc \
+  src/pdb.h \
   src/shell.cc \
+  src/hell.h \
   src/structure.cc \
   src/structure.h
+
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 \

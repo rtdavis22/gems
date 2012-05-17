@@ -6,10 +6,23 @@
 
 set -e
 
+mkdir -p deps
+
 if test ! -e deps/v8; then
   echo "Fetching v8 from the web..."
   svn export http://v8.googlecode.com/svn/trunk/ deps/v8 > /dev/null
 fi
+
+if test ! -e deps/gmml; then
+  echo "Fetching gmml from the web..."
+  git clone https://code.google.com/p/gmml/ deps/gmml
+fi
+
+cd deps/gmml
+if test ! -e configure; then
+  sh autogen.sh
+fi
+cd ../..
 
 if test ! -e build/gyp; then
   echo "Fetching gyp from the web..."

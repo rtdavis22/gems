@@ -41,13 +41,10 @@
 
       'sources': [
         '../src/atom.cc',
-        '../src/build.cc',
-        '../src/coordinate.cc',
-        '../src/element.cc',
-        '../src/file_io.cc',
+        '../src/environment.cc',
         '../src/gems.cc',
-        '../src/pdb_structure.cc',
-        '../src/residue.cc',
+        '../src/glycam.cc',
+        '../src/pdb.cc',
         '../src/shell.cc',
         '../src/structure.cc',
       ],
