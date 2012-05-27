@@ -20,12 +20,13 @@
 
 // Author: Robert Davis
 
-function Structure() {
-}
+(function(global) {
+    global.Structure = function() {
+    };
 
-Structure.prototype = _getStructurePrototype();
+    global.Structure.prototype = _getStructurePrototype();
 
-Structure.prototype.atoms = function(index) {
-    return new Atom(this, index);
-}
-
+    global.Structure.prototype.atoms = function(index) {
+        return new Atom(this, index);
+    };
+}(this));

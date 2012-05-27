@@ -20,10 +20,12 @@
 
 // Author: Robert Davis
 
-loadPrepFile(getFullDataFilePath("Glycam_06.prep"));
+(function(global) {
+    loadPrepFile(getFullDataFilePath("Glycam_06.prep"));
 
-function buildGlycamSequence(sequence) {
-    var structure = new Structure();
-    _setFromGlycamSequence.call(structure, sequence);
-    return structure;
-}
+    global.buildGlycamSequence = function(sequence) {
+        var structure = new Structure();
+        _setFromGlycamSequence.call(structure, sequence);
+        return structure;
+    };
+}(this));

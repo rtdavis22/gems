@@ -20,17 +20,19 @@
 
 // Author: Robert Davis
 
-function loadJs(file) {
-    load(_data_path + "/src/js/" + file);
-}
+(function(global) {
+    global.loadJs = function(file) {
+        load(_data_path + "/src/js/" + file);
+    }
 
-function getFullDataFilePath(file) {
-    return _data_path + "/dat/" + file;
-}
+    global.getFullDataFilePath = function(file) {
+        return _data_path + "/dat/" + file;
+    }
 
-loadJs("utils.js");
-loadJs("structure_module.js");
-loadJs("pdb_module.js");
-loadJs("atom_module.js");
-loadJs("environment_module.js");
-loadJs("glycam_module.js");
+    loadJs("utils.js");
+    loadJs("structure_module.js");
+    loadJs("pdb_module.js");
+    loadJs("atom_module.js");
+    loadJs("environment_module.js");
+    loadJs("glycam_module.js");
+}(this));

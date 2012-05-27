@@ -20,11 +20,11 @@
 
 // Author: Robert Davis
 
-function Atom(structure, index) {
-    this.structure = structure;
-    this.index = index;
-}
+(function(global) {
+    global.Atom = function(structure, index) {
+        this.structure = structure;
+        this.index = index;
+    };
 
-Atom.prototype = _getAtomPrototype();
-
-
+    global.Atom.prototype = _getAtomPrototype();
+}(this));

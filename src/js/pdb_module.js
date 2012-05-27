@@ -20,15 +20,16 @@
 
 // Author: Robert Davis
 
-function PdbFileStructure(file, mappings) {
-    _initPdbFileStructure.call(this, file, mappings);
-}
+(function(global) {
+    global.PdbFileStructure = function(file, mappings) {
+        _initPdbFileStructure.call(this, file, mappings);
+    };
 
-inherits(PdbFileStructure, Structure);
+    inherits(PdbFileStructure, Structure);
 
-mergeInto(PdbFileStructure.prototype, _getPdbStructurePrototype);
+    mergeInto(PdbFileStructure.prototype, _getPdbStructurePrototype);
 
-function loadPdb(file, mappings) {
-    return new PdbFileStructure(file, mappings);
-}
-
+    global.loadPdb = function(file, mappings) {
+        return new PdbFileStructure(file, mappings);
+    };
+}(this));

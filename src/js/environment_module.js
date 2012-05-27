@@ -20,18 +20,20 @@
 
 // Author: Robert Davis
 
-function addPath(path) {
-    _addPath(path);
-}
+(function(global) {
+    global.addPath = function(path) {
+        _addPath(path);
+    };
 
-function loadPrepFile(file) {
-    _loadPrepFile(file);
-}
+    global.loadPrepFile = function(file) {
+        _loadPrepFile(file);
+    };
 
-function loadLibraryFile(file) {
-    _loadLibraryFile(file);
-}
+    global.loadLibraryFile = function(file) {
+        _loadLibraryFile(file);
+    };
 
-function loadParameterFile(file) {
-    _loadParameterFile(file);
-}
+    global.loadParameterFile = function(file) {
+        _loadParameterFile(file);
+    };
+}(this));
