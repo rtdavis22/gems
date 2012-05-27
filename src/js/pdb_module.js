@@ -20,21 +20,15 @@
 
 // Author: Robert Davis
 
-#ifndef GEMS_GEMS_H_
-#define GEMS_GEMS_H_
+function PdbFileStructure(file, mappings) {
+    _initPdbFileStructure.call(this, file, mappings);
+}
 
-#include <string>
+inherits(PdbFileStructure, Structure);
 
-#include "v8.h"
+mergeInto(PdbFileStructure.prototype, _getPdbStructurePrototype);
 
-namespace gems {
+function loadPdb(file, mappings) {
+    return new PdbFileStructure(file, mappings);
+}
 
-class Gems {
-  public:
-    static void init(v8::Handle<v8::ObjectTemplate> object_template);
-    static void load_files();
-};
-
-}  // namespace gems
-
-#endif  // GEMS_GEMS_H_

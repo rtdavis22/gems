@@ -20,21 +20,18 @@
 
 // Author: Robert Davis
 
-#ifndef GEMS_GEMS_H_
-#define GEMS_GEMS_H_
+function addPath(path) {
+    _addPath(path);
+}
 
-#include <string>
+function loadPrepFile(file) {
+    _loadPrepFile(file);
+}
 
-#include "v8.h"
+function loadLibraryFile(file) {
+    _loadLibraryFile(file);
+}
 
-namespace gems {
-
-class Gems {
-  public:
-    static void init(v8::Handle<v8::ObjectTemplate> object_template);
-    static void load_files();
-};
-
-}  // namespace gems
-
-#endif  // GEMS_GEMS_H_
+function loadParameterFile(file) {
+    _loadParameterFile(file);
+}

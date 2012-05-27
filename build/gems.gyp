@@ -40,13 +40,13 @@
       },
 
       'sources': [
-        '../src/atom.cc',
-        '../src/environment.cc',
+        '../src/atom_module.cc',
+        '../src/environment_module.cc',
         '../src/gems.cc',
-        '../src/glycam.cc',
-        '../src/pdb.cc',
+        '../src/glycam_module.cc',
+        '../src/pdb_module.cc',
         '../src/shell.cc',
-        '../src/structure.cc',
+        '../src/structure_module.cc',
       ],
 
       'defines': [

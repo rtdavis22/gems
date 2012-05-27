@@ -45,20 +45,20 @@ EXTRA_DIST = \
   src/js/pdb.js \
   src/js/structure.js \
   src/js/utils.js \
-  src/atom.cc \
-  src/atom.h \
-  src/environment.cc \
-  src/environment.h \
+  src/atom_module.cc \
+  src/atom_module.h \
+  src/environment_module.cc \
+  src/environment_module.h \
   src/gems.cc \
   src/gems.h \
-  src/glycam.cc \
-  src/glycam.h \
-  src/pdb.cc \
-  src/pdb.h \
+  src/glycam_module.cc \
+  src/glycam_module.h \
+  src/pdb_module.cc \
+  src/pdb_module.h \
   src/shell.cc \
   src/shell.h \
-  src/structure.cc \
-  src/structure.h
+  src/structure_module.cc \
+  src/structure_module.h
 
 
 MAINTAINERCLEANFILES = \

@@ -4,7 +4,7 @@
 AC_PREREQ([2.65])
 AC_INIT([gems], [0.1.0], [rtdavis22@gmail.com])
 AM_INIT_AUTOMAKE([foreign silent-rules])
-AC_CONFIG_SRCDIR([src/atom.cc])
+AC_CONFIG_SRCDIR([src/atom_module.cc])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
