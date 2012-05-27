@@ -2,6 +2,8 @@
 
 #include "gems.h"
 
+#include <cstdlib>
+
 #include <fstream>
 #include <stdexcept>
 
@@ -27,13 +29,22 @@ bool file_exists(const std::string& file_name) {
 }
 
 string get_data_directory() {
-    if (file_exists("/usr/local/share/gems")) {
+    char *gems_data = getenv("GEMS_DATA");
+    if (gems_data != NULL) {
+        string data_directory(gems_data);
+        if (data_directory[data_directory.size() - 1] == '/')
+            data_directory.erase(data_directory.end() - 1);
+        return data_directory;
+    }
+
+    string public_data_dir = "/usr/local/share/gems";
+    if (file_exists(public_data_dir)) {
 
     } else {
         throw std::runtime_error("Could not find data directory.");
     }
 
-    return "/usr/local/share/gems";
+    return public_data_dir;
 }
 
 Handle<Value> get_data_path(Local<String> property, const AccessorInfo& info) {
@@ -47,7 +58,6 @@ void Gems::init(Handle<ObjectTemplate> global) {
     AtomModule::init(global);
     PdbModule::init(global);
     EnvironmentModule::init(global);
-
     GlycamModule::init(global);
 
     global->SetAccessor(String::New("_data_path"), get_data_path);
