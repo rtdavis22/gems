@@ -22,8 +22,16 @@
 
 #include "pdb_module.h"
 
+#include <string>
+
 #include "gmml/gmml.h"
 
+#include "structure_module.h"
+
+using std::string;
+
+using gmml::PdbFile;
+using gmml::PdbFileBuilder;
 using gmml::Structure;
 
 using namespace v8;
@@ -46,6 +54,56 @@ Handle<Value> get_pdb_structure_prototype(const Arguments& args) {
     return scope.Close(object);
 }
 
+class GetPdbFileBuilder {
+  public:
+    explicit GetPdbFileBuilder(Handle<Object> options)
+            : builder_(NULL), options_(options) {
+    }
+
+    PdbFileBuilder *operator()() {
+        builder_ = new PdbFileBuilder;
+        check_for_hydrogens_included_property();
+        return builder_;
+    }
+
+  private:
+    void check_for_hydrogens_included_property() {
+        Local<String> prop_name(String::New("includeHydrogens"));
+        if (options_->Has(prop_name)) {
+            if (options_->Get(prop_name)->BooleanValue()) {
+                builder_->include_hydrogens();
+            } else {
+                builder_->dont_include_hydrogens();
+            }
+        }
+    }
+
+    PdbFileBuilder *builder_;
+    Handle<Object> options_;
+};
+
+// This function assumes the following:
+// - args.This() is a Structure
+// - args[0] is the file name and is a string
+// - args[1] is an object with options
+Handle<Value> print_pdb_file(const Arguments& args) {
+    HandleScope scope;
+
+    Structure *structure = StructureModule::extract_ptr(args.This());
+
+    string file_name(*String::Utf8Value(args[0]));
+
+    PdbFileBuilder *builder = GetPdbFileBuilder(args[1]->ToObject())();
+
+    PdbFile *pdb_file = builder->build(*structure);
+    delete builder;
+
+    pdb_file->print(file_name);
+    delete pdb_file;
+
+    return scope.Close(Undefined());
+}
+
 }  // namespace
 
 void PdbModule::init(Handle<ObjectTemplate> global) {
@@ -54,6 +112,9 @@ void PdbModule::init(Handle<ObjectTemplate> global) {
 
     global->Set(String::New("_initPdbFileStructure"),
                 FunctionTemplate::New(init_pdb_file_structure));
+
+    global->Set(String::New("_printPdbFile"),
+                FunctionTemplate::New(print_pdb_file));
 }
 
 }  // namespace gems

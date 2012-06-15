@@ -32,4 +32,8 @@
     global.loadPdb = function(file, mappings) {
         return new PdbFileStructure(file, mappings);
     };
+
+    Structure.prototype.printPdbFile = function(file, options) {
+        _printPdbFile.call(this, file, options || {});
+    };
 }(this));
