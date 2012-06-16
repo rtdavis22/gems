@@ -34,8 +34,12 @@ namespace {
 Handle<Value> set_from_glycam_sequence(const Arguments& args) {
     HandleScope scope;
     Local<v8::Object> obj = args.This();
-    Structure *structure = gmml::glycam_build(*String::Utf8Value(args[0]));
-    obj->SetHiddenValue(String::New("pointer"), External::New(structure));
+    try {
+        Structure *structure = gmml::glycam_build(*String::Utf8Value(args[0]));
+        obj->SetHiddenValue(String::New("pointer"), External::New(structure));
+    } catch(const std::exception& e) {
+        return scope.Close(ThrowException(String::New("Error in sequence.")));
+    }
     return scope.Close(Undefined());    
 }
 
