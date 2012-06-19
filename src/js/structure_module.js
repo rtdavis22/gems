@@ -24,9 +24,21 @@
     global.Structure = function() {
     };
 
+    global.createStructure = function() {
+        var structure = new Structure();
+        structure.init();
+        return structure;
+    };
+
     global.Structure.prototype = _getStructurePrototype();
 
     global.Structure.prototype.atoms = function(index) {
         return new Atom(this, index);
+    };
+
+    global.build = function(arg) {
+        if (arg instanceof Array) {
+
+        }
     };
 }(this));

@@ -31,10 +31,25 @@ using namespace v8;
 namespace gems {
 namespace {
 
+Handle<Value> init(const Arguments& args) {
+    HandleScope scope;
+    Local<v8::Object> obj = args.This();
+    Structure *structure = new Structure;
+    obj->SetHiddenValue(String::New("pointer"), External::New(structure));
+    return scope.Close(Undefined());
+}
+
 Handle<Value> get_size(Local<String> property, const AccessorInfo& info) {
     HandleScope scope;
     Structure *structure = StructureModule::extract_ptr(info.This());
     return scope.Close(Integer::New(structure->size()));
+}
+
+Handle<Value> attach(const Arguments& args) {
+    Structure *structure = StructureModule::extract_ptr(args.This());
+    Structure *rhs = StructureModule::extract_ptr(args[0]);
+    structure->attach(rhs);
+    return Undefined();
 }
 
 Handle<Value> print_pdb_file(const Arguments& args) {
@@ -77,6 +92,12 @@ Handle<Value> get_structure_prototype(const Arguments& args) {
     HandleScope scope;
 
     Local<Object> object = Object::New();
+
+    object->Set(String::New("init"),
+                FunctionTemplate::New(init)->GetFunction());
+
+    object->Set(String::New("attach"),
+                FunctionTemplate::New(attach)->GetFunction());
 
     object->Set(String::New("printPdbFile"),
                 FunctionTemplate::New(print_pdb_file)->GetFunction());
