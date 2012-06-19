@@ -256,7 +256,7 @@ int RunMain(int argc, char* argv[]) {
 
 // The read-eval-execute loop of the shell.
 void RunShell(v8::Handle<v8::Context> context) {
-  printf("V8 version %s [sample shell]\n", v8::V8::GetVersion());
+  printf("Welcome to the GEMS interactive shell!\n");
   static const int kBufferSize = 256;
   // Enter the execution environment before evaluating any code.
   v8::Context::Scope context_scope(context);
