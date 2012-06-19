@@ -49,9 +49,9 @@ bool file_exists(const std::string& file_name) {
 }
 
 string get_data_directory() {
-    char *gems_data = getenv("GEMS_DATA");
-    if (gems_data != NULL) {
-        string data_directory(gems_data);
+    char *gems_home = getenv("GEMS_HOME");
+    if (gems_home != NULL) {
+        string data_directory(gems_home);
         if (data_directory[data_directory.size() - 1] == '/')
             data_directory.erase(data_directory.end() - 1);
         return data_directory;
