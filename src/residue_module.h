@@ -20,16 +20,18 @@
 
 // Author: Robert Davis
 
-(function(global) {
-    loadPrepFile(getFullDataFilePath("GLYCAM_06h.prep"));
-    loadParameterFile(getFullDataFilePath("GLYCAM_06h.dat"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_amino_06h.lib"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_aminoct_06h.lib"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_aminont_06h.lib"));
+#ifndef GEMS_RESIDUE_MODULE_H_
+#define GEMS_RESIDUE_MODULE_H_
 
-    global.buildGlycamSequence = function(sequence) {
-        var structure = new Structure();
-        _setFromGlycamSequence.call(structure, sequence);
-        return structure;
-    };
-}(this));
+#include "v8.h"
+
+namespace gems {
+
+class ResidueModule {
+  public:
+    static void init(v8::Handle<v8::ObjectTemplate> object_template);
+};
+
+}  // namespace gems
+
+#endif  // GEMS_RESIDUE_MODULE_H_

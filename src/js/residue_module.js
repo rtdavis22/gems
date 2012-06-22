@@ -21,15 +21,15 @@
 // Author: Robert Davis
 
 (function(global) {
-    loadPrepFile(getFullDataFilePath("GLYCAM_06h.prep"));
-    loadParameterFile(getFullDataFilePath("GLYCAM_06h.dat"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_amino_06h.lib"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_aminoct_06h.lib"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_aminont_06h.lib"));
+    global.Residue = function(structure, index) {
+        this.structure = structure;
+        this.index = index;
+    };
 
-    global.buildGlycamSequence = function(sequence) {
-        var structure = new Structure();
-        _setFromGlycamSequence.call(structure, sequence);
-        return structure;
+    global.Residue.prototype = _getResiduePrototype();
+
+    global.Residue.prototype.atoms = function(arg) {
+        return new Atom(this.structure,
+                        this.structure.getAtomIndex(this.index, arg));
     };
 }(this));

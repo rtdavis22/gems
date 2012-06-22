@@ -32,7 +32,12 @@
     loadJs("utils.js");
     loadJs("structure_module.js");
     loadJs("pdb_module.js");
+    loadJs("prep_file_module.js");
+    loadJs("residue_module.js");
     loadJs("atom_module.js");
     loadJs("environment_module.js");
-    loadJs("glycam_module.js");
+
+    if (_isGlycamLoaded) {
+        loadJs("glycam_module.js");
+    }
 }(this));

@@ -36,4 +36,16 @@
     global.loadParameterFile = function(file) {
         _loadParameterFile(file);
     };
+
+    global.addResidueMapping = function(code, mappedCode) {
+        _addResidueMapping(code, mappedCode);
+    };
+
+    global.addHeadMapping = function(code, mappedCode) {
+        _addHeadMapping(code, mappedCode);
+    };
+
+    global.addTailMapping = function(code, mappedCode) {
+        _addTailMapping(code, mappedCode);
+    }
 }(this));

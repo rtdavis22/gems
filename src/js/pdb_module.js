@@ -21,13 +21,30 @@
 // Author: Robert Davis
 
 (function(global) {
-    global.PdbFileStructure = function(file, mappings) {
-        _initPdbFileStructure.call(this, file, mappings);
+    global.PdbFileStructure = function(file, options) {
+        _initPdbFileStructure.call(this, file, options || {});
     };
 
     inherits(PdbFileStructure, Structure);
 
-    mergeInto(PdbFileStructure.prototype, _getPdbStructurePrototype);
+    mergeInto(PdbFileStructure.prototype, _getPdbStructurePrototype());
+
+    global.PdbFileStructure.prototype.residues = function(residue) {
+        var index = -1;
+        if (typeof residue === 'object') {
+            index = this._getResidueIndex(residue);
+        } else {
+            index = residue;
+        }
+        return Structure.prototype.residues.call(this, index);
+    };
+
+    global.PdbFileStructure.prototype.setTail = function(residue, atom) {
+        if (typeof residue === 'object') {
+            residue = this._getResidueIndex(residue);
+        }
+        return Structure.prototype.setTail.call(this, residue, atom);
+    };
 
     global.loadPdb = function(file, mappings) {
         return new PdbFileStructure(file, mappings);

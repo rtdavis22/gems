@@ -68,6 +68,14 @@ static bool run_shell;
 
 int main(int argc, char* argv[]) {
   v8::V8::SetFlagsFromCommandLine(&argc, argv, true);
+
+  for (int i = 1; i < argc; i++) {
+    const char* str = argv[i];
+    if (strcmp(str, "--no-glycam") == 0) {
+      gems::Gems::dont_load_glycam();
+    }
+  }
+
   run_shell = (argc == 1);
   int result;
   {
@@ -78,6 +86,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
     context->Enter();
+
 
     gems::Gems::load_files();
 

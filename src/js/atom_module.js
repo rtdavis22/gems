@@ -27,4 +27,8 @@
     };
 
     global.Atom.prototype = _getAtomPrototype();
+
+    global.Atom.prototype.getBondedAtoms = function() {
+        return this.structure.getBondedAtoms(this.index);
+    };
 }(this));

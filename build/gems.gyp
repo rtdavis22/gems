@@ -45,6 +45,8 @@
         '../src/gems.cc',
         '../src/glycam_module.cc',
         '../src/pdb_module.cc',
+        '../src/prep_file_module.cc',
+        '../src/residue_module.cc',
         '../src/shell.cc',
         '../src/structure_module.cc',
       ],

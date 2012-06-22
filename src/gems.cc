@@ -33,6 +33,8 @@
 #include "environment_module.h"
 #include "glycam_module.h"
 #include "pdb_module.h"
+#include "prep_file_module.h"
+#include "residue_module.h"
 #include "shell.h"
 #include "structure_module.h"
 
@@ -73,14 +75,19 @@ Handle<Value> get_data_path(Local<String> property, const AccessorInfo& info) {
 
 }  // namespace
 
+bool Gems::kIsGlycamLoaded = true;
+
 void Gems::init(Handle<ObjectTemplate> global) {
     StructureModule::init(global);
+    ResidueModule::init(global);
     AtomModule::init(global);
     PdbModule::init(global);
+    PrepFileModule::init(global);
     EnvironmentModule::init(global);
     GlycamModule::init(global);
 
     global->SetAccessor(String::New("_data_path"), get_data_path);
+    global->SetAccessor(String::New("_isGlycamLoaded"), is_glycam_loaded);
 }
 
 void Gems::load_files() {

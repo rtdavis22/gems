@@ -21,15 +21,9 @@
 // Author: Robert Davis
 
 (function(global) {
-    loadPrepFile(getFullDataFilePath("GLYCAM_06h.prep"));
-    loadParameterFile(getFullDataFilePath("GLYCAM_06h.dat"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_amino_06h.lib"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_aminoct_06h.lib"));
-    loadLibraryFile(getFullDataFilePath("GLYCAM_aminont_06h.lib"));
-
-    global.buildGlycamSequence = function(sequence) {
-        var structure = new Structure();
-        _setFromGlycamSequence.call(structure, sequence);
-        return structure;
+    global.PrepFile = function() {
+        this._init();
     };
+
+    global.PrepFile.prototype = _getPrepFilePrototype();
 }(this));

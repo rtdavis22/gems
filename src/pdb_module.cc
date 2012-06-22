@@ -32,6 +32,9 @@ using std::string;
 
 using gmml::PdbFile;
 using gmml::PdbFileBuilder;
+using gmml::PdbFileStructure;
+using gmml::PdbResidueId;
+using gmml::PdbStructureBuilder;
 using gmml::Structure;
 
 using namespace v8;
@@ -39,17 +42,164 @@ using namespace v8;
 namespace gems {
 namespace {
 
+class ExtractPdbResidueId {
+  public:
+    explicit ExtractPdbResidueId(Handle<Object> object) : object_(object) {
+    }
+
+    // Returns NULL if the object doesn't have residue id information.
+    PdbResidueId *operator()() {
+        int res_num = get_res_num();
+        if (res_num == -1)
+            return NULL;
+        char chain_id = get_chain_id();
+        char i_code = get_i_code();
+        return new PdbResidueId(chain_id, res_num, i_code);
+    }
+
+  private:
+    int get_res_num() {
+        Local<String> prop_name(String::New("resNum"));
+        if (!object_->Has(prop_name))
+            return -1;
+        return object_->Get(prop_name)->IntegerValue();
+    }
+
+    char get_chain_id() {
+        return get_char_property("chainId");
+    }
+
+    char get_i_code() {
+        return get_char_property("iCode");
+    }
+
+    // Returns ' ' if the property is not on the object.
+    char get_char_property(const string& property) {
+        Local<String> prop_name(String::New(property.c_str()));
+        if (object_->Has(prop_name)) {
+            string value(*String::Utf8Value(object_->Get(prop_name)));
+            return value.empty()?' ':value[0];
+        } else {
+            return ' ';
+        }
+    }
+
+    Handle<Object> object_;
+};
+
+class GetPdbStructureBuilder {
+  public:
+    explicit GetPdbStructureBuilder(Handle<Object> options)
+            : builder_(NULL), options_(options) {
+    }
+
+    PdbStructureBuilder *operator()() {
+        builder_ = new PdbStructureBuilder;
+        check_for_use_residue_mappings();
+        check_for_mappings();
+        return builder_;
+    }
+
+  private:
+    void check_for_use_residue_mappings() {
+        Local<String> prop_name(String::New("useResidueMap"));
+        if (options_->Has(prop_name)) {
+            if (options_->Get(prop_name)->BooleanValue()) {
+                builder_->use_residue_map();
+            } else {
+                builder_->ignore_residue_map();
+            }
+        }
+    }
+
+    void check_for_mappings() {
+        check_for_residue_mappings();
+    }
+
+    void check_for_residue_mappings() {
+        Local<String> prop_name(String::New("residueMappings"));
+        if (options_->Has(prop_name)) {
+            Local<Array> array = Array::Cast(*options_->Get(prop_name));
+            for (int i = 0; i < array->Length(); i++) {
+                Local<Object> mapping(array->Get(i)->ToObject());
+                add_residue_mapping(mapping);
+            }    
+        }
+    }
+
+    void add_residue_mapping(Handle<Object> object) {
+        string mapped_name = get_string_property(object, "to");
+        Handle<Value> from_value = object->Get(String::New("from"));
+        if (from_value->IsString()) {
+            builder_->add_mapping(*String::Utf8Value(from_value), mapped_name);
+        } else {
+            PdbResidueId *pdb_residue_id =
+                    ExtractPdbResidueId(from_value->ToObject())();
+            builder_->add_mapping(*pdb_residue_id, mapped_name);
+            delete pdb_residue_id;
+        }
+    }
+
+    static string get_string_property(Handle<Object> object,
+                                      const string& property) {
+        return *String::Utf8Value(object->Get(String::New(property.c_str())));
+    }
+
+    void add_head_mappings() {
+        Local<String> prop_name(String::New("headMappings"));
+        if (options_->Has(prop_name)) {
+            Local<Array> array = Array::Cast(*options_->Get(prop_name));
+            for (int i = 0; i < array->Length(); i++) {
+                Local<Object> object(array->Get(i)->ToObject());
+                builder_->add_head_mapping(get_string_property(object, "from"),
+                                           get_string_property(object, "to"));
+            }
+        }
+    }
+
+    PdbStructureBuilder *builder_;
+    Handle<Object> options_;
+};
+
+// Preconditions:
+// - args.This() is a PdbFileStructure
+// - args[0] is the file name and is a string
+// - args[1] is an object with options
 Handle<Value> init_pdb_file_structure(const Arguments& args) {
     HandleScope scope;
     Local<Object> obj = args.This();
-    obj->SetHiddenValue(String::New("pointer"), External::New(new Structure));
+
+    PdbStructureBuilder *builder =
+            GetPdbStructureBuilder(args[1]->ToObject())();
+
+    gmml::File pdb_file(*String::Utf8Value(args[0]));
+    PdbFileStructure *structure = builder->build(pdb_file);
+    delete builder;
+
+    obj->SetHiddenValue(String::New("pointer"), External::New(structure));
+
     return scope.Close(Undefined());
+}
+
+Handle<Value> get_residue_index(const Arguments& args) {
+    PdbFileStructure *structure =
+      static_cast<PdbFileStructure*>(StructureModule::extract_ptr(args.This()));
+
+    Local<Object> residue = args[0]->ToObject();
+    PdbResidueId *id = ExtractPdbResidueId(residue)();
+    int index = structure->map_residue(*id);
+    delete id;
+
+    return Integer::New(index);
 }
 
 Handle<Value> get_pdb_structure_prototype(const Arguments& args) {
     HandleScope scope;
 
     Local<Object> object = Object::New();
+
+    object->Set(String::New("_getResidueIndex"),
+                FunctionTemplate::New(get_residue_index)->GetFunction());
 
     return scope.Close(object);
 }
@@ -62,6 +212,7 @@ class GetPdbFileBuilder {
 
     PdbFileBuilder *operator()() {
         builder_ = new PdbFileBuilder;
+        builder_->include_hydrogens();
         check_for_hydrogens_included_property();
         return builder_;
     }
@@ -82,7 +233,7 @@ class GetPdbFileBuilder {
     Handle<Object> options_;
 };
 
-// This function assumes the following:
+// Preconditions:
 // - args.This() is a Structure
 // - args[0] is the file name and is a string
 // - args[1] is an object with options

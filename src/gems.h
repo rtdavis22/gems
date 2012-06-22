@@ -33,6 +33,16 @@ class Gems {
   public:
     static void init(v8::Handle<v8::ObjectTemplate> object_template);
     static void load_files();
+
+    static void dont_load_glycam() { kIsGlycamLoaded = false; }
+
+  private:
+    static v8::Handle<v8::Value> is_glycam_loaded(v8::Local<v8::String>,
+                                                  const v8::AccessorInfo&) {
+        return v8::Boolean::New(kIsGlycamLoaded);
+    }
+
+    static bool kIsGlycamLoaded;
 };
 
 }  // namespace gems
